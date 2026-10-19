@@ -20,16 +20,17 @@ import Foundation
     }
 
     @Test func savedIsWhatMovedIntoClothesAndEmergency() {
-        // The 350 paid before the first run moved no money here, and the card isn't saving.
-        #expect(ledger.saved(in: Fixtures.october) == .zero)
-        #expect(Fixtures.afterSideJob().saved(in: Fixtures.october) == .euros(200))
+        // The 350 paid before the first run was saved this month too, though its money was already in the balances.
+        // The card isn't saving.
+        #expect(ledger.saved(in: Fixtures.october) == .euros(350))
+        #expect(Fixtures.afterSideJob().saved(in: Fixtures.october) == .euros(550))
         #expect(Fixtures.afterSideJob().saved(in: YearMonth(2026, 11)) == .zero)
     }
 
     @Test func savedLeavesOutCorrections() {
         var l = ledger
         l.entries.append(Entry(date: today, amount: .euros(30), kind: .adjustment, to: .emergency))
-        #expect(l.saved(in: Fixtures.october) == .zero)
+        #expect(l.saved(in: Fixtures.october) == ledger.saved(in: Fixtures.october))
     }
 
     @Test func theSideJobIsExpectedTomorrowUntilItArrives() {
