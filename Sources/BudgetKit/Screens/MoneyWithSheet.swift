@@ -58,7 +58,14 @@ struct MoneyWithSheet: View {
                 Toggle("", isOn: $before).labelsHidden().toggleStyle(.glass)
             }
             .padding(.horizontal, -14)
-            if !trimmed.isEmpty { Text(outcome).font(Kit.quiet).opacity(0.55).privacySensitive() }
+            if !trimmed.isEmpty {
+                // Only the amount hides with the rest: the words still say what saving will do.
+                HStack(spacing: 4) {
+                    Text(outcome.words)
+                    if let amount = outcome.amount { Text(amount.formatted).monospacedDigit().privacySensitive() }
+                }
+                .font(Kit.quiet).opacity(0.55)
+            }
             SheetFooter(cancel: cancel) {
                 Button("Save") { if let cents { save(kind, cents, person, before) } }
                     .buttonStyle(.primary)
@@ -68,12 +75,14 @@ struct MoneyWithSheet: View {
         .modal(close: cancel, light: [.hex(0xF472B6), .arrived, .hex(0xF472B6)])
     }
 
-    /// How it will stand after this, said before it is saved.
-    private var outcome: String {
+    /// How it will stand after this, said before it is saved: the words, and the amount apart so it can hide alone.
+    private var outcome: (words: String, amount: Cents?) {
         let now = ledger.owes(person)
         let change = cents ?? .zero
         let after = kind == .lent || kind == .paidBack ? now + change : now - change
         let who = trimmed
-        return after > .zero ? "Then \(who) owes you \(after.formatted)." : after < .zero ? "Then you owe \(who) \(Cents(-after.value).formatted)." : "Then you're settled with \(who)."
+        if after > .zero { return ("Then \(who) owes you", after) }
+        if after < .zero { return ("Then you owe \(who)", Cents(-after.value)) }
+        return ("Then you're settled with \(who).", nil)
     }
 }
