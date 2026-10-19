@@ -21,7 +21,11 @@ struct EntriesPane: View {
             list(ledger, month: month, thisMonth: thisMonth).pane()
             if let editing {
                 SidePanel(close: closeEditor) {
-                    EntryEditor(draft: Binding { self.editing ?? editing } set: { self.editing = $0 },
+                    // A field losing focus as the panel leaves writes its text one last time: only into the entry
+                    // still open, so it can never open a closed editor again (Cancel and the swipe did nothing).
+                    EntryEditor(draft: Binding { self.editing ?? editing } set: { draft in
+                                    if self.editing?.original.id == draft.original.id { self.editing = draft }
+                                },
                                 title: editing.original.title(ledger: ledger, partner: partnerName),
                                 categories: ledger.categories.filter { !$0.retired || $0.id == editing.category.id },
                                 save: { store.update($0); closeEditor() },

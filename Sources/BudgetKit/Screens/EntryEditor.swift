@@ -23,7 +23,7 @@ struct EntryEditor: View {
                 Text("A balance set by hand. Delete it to take it back.").font(Kit.body).opacity(0.7)
             } else {
                 AmountField(label: title, text: $draft.amount,
-                            valid: draft.amountCents != nil, autofocus: true)
+                            valid: draft.amountCents != nil)
             }
             if draft.isSpend {
                 // In Quick log's order: what it was for, how it was paid, who with, a note.

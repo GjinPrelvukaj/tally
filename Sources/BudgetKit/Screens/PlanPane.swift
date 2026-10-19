@@ -17,7 +17,10 @@ struct PlanPane: View {
             list.pane()
             if let editing {
                 SidePanel(close: closeEditor) {
-                    PlanItemEditor(draft: Binding { self.editing ?? editing } set: { self.editing = $0 },
+                    // A field losing focus as the panel leaves writes one last time: only into the item still open.
+                    PlanItemEditor(draft: Binding { self.editing ?? editing } set: { draft in
+                                       if self.editing?.id == draft.id { self.editing = draft }
+                                   },
                                    incomes: store.ledger().plan.filter { $0.kind == .income && $0.id != editing.id },
                                    month: month, isNew: isNew,
                                    wasIncome: store.ledger().plan.first { $0.id == editing.id }?.kind == .income,
