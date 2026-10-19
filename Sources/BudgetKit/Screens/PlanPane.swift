@@ -8,8 +8,6 @@ struct PlanPane: View {
     /// The item being edited, in the panel.
     @State private var editing: PlanItemDraft?
     @State private var isNew = false
-    /// How tall the fade above the buttons is.
-    private let fade: CGFloat = 16
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -54,6 +52,8 @@ struct PlanPane: View {
                 Button { open(PlanItemDraft(startingIn: month), new: true) } label: { Label("Add Item", systemImage: "plus") }
                     .buttonStyle(.secondary)
             }
+            // Clear room under the header, above where the rows fade out.
+            .padding(.bottom, Kit.Space.item)
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     summary(ledger.planSummary(for: month))
@@ -62,18 +62,11 @@ struct PlanPane: View {
                         if !items.isEmpty { section(group, items, plan: ledger.plan) }
                     }
                 }
-                .padding(.top, Kit.Space.group)
-                // Room past the last row, so scrolled to the end it sits clear of the fade below.
-                .padding(.bottom, fade)
+                // Room at both ends, so at rest the first and last rows sit clear of the fades.
+                .padding(.vertical, Kit.fade)
             }
             .scrollIndicators(.never)
-            // Rows fade out at the bottom instead of being cut.
-            .mask {
-                VStack(spacing: 0) {
-                    Rectangle()
-                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: fade)
-                }
-            }
+            .edgeFade()
         }
     }
 

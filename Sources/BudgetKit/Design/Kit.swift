@@ -23,6 +23,8 @@ enum Kit {
     static let rowAmount: CGFloat = 96
     /// The big amount at the top of a card, a panel or the first run.
     static let largeField: CGFloat = 160
+    /// How far a scrolling list fades out at its ends (`edgeFade`); its rows keep this much room at each end.
+    static let fade: CGFloat = 16
 
     /// The only gaps used inside a sheet or screen, smallest to largest.
     enum Space {
@@ -155,6 +157,18 @@ extension View {
             .padding(.horizontal, 40)
             .padding(.top, 36)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    /// A list scrolling under a header: rows fade out at both ends instead of being cut, so the header keeps clear
+    /// room under it.
+    func edgeFade() -> some View {
+        mask {
+            VStack(spacing: 0) {
+                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: Kit.fade)
+                Rectangle()
+                LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: Kit.fade)
+            }
+        }
     }
 
     /// A list's rows on one quiet rounded panel (the plan's groups, the month's entries).

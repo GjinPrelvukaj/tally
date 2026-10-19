@@ -9,7 +9,6 @@ struct EntriesPane: View {
     @State private var chosen: YearMonth?
     /// The entry being edited, in the panel.
     @State private var editing: EntryDraft?
-    private let fade: CGFloat = 16
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.partnerName) private var partnerName
 
@@ -53,6 +52,8 @@ struct EntriesPane: View {
                 Text("\(month.name) \(String(month.year))").font(.system(size: 11)).monospacedDigit().opacity(0.55)
                 turn("chevron.right", to: month < thisMonth ? month.next : nil, label: "Later month")
             }
+            // Clear room under the header, above where the rows fade out.
+            .padding(.bottom, Kit.Space.item)
             if entries.isEmpty {
                 Text("Nothing here yet").font(Kit.body).opacity(0.55).padding(.top, Kit.Space.group)
             } else {
@@ -64,17 +65,10 @@ struct EntriesPane: View {
                         }
                     }
                     .rowPanel()
-                    .padding(.top, Kit.Space.group)
-                    .padding(.bottom, fade)
+                    .padding(.vertical, Kit.fade)
                 }
                 .scrollIndicators(.never)
-                // Rows fade out at the bottom instead of being cut.
-                .mask {
-                    VStack(spacing: 0) {
-                        Rectangle()
-                        LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: fade)
-                    }
-                }
+                .edgeFade()
             }
         }
     }
