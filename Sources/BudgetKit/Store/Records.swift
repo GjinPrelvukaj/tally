@@ -77,6 +77,8 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
     var owed: Int?
     /// Since `SchemaV2`: bank, card or cash.
     var method: String?
+    /// Since `SchemaV3`: who money is open with; nil is the partner.
+    var person: String?
 
     init(_ entry: Entry) {
         id = entry.id
@@ -103,6 +105,7 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
         partner = entry.partner?.rawValue
         owed = entry.owed?.value
         method = entry.method?.rawValue
+        person = entry.person
     }
 
     var value: Entry {
@@ -111,7 +114,7 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
               note: note, planItem: planItem,
               forMonth: forYear.flatMap { year in forMonth.map { YearMonth(year, $0) } }, movesMoney: movesMoney,
               partner: partner.flatMap(PartnerShare.init), owed: owed.map(Cents.init),
-              method: method.flatMap(PaymentMethod.init))
+              method: method.flatMap(PaymentMethod.init), person: person)
     }
 }
 

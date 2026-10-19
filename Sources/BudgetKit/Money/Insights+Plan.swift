@@ -61,15 +61,21 @@ extension Ledger {
                         detail: "\(owed[0].formatted) at the end of \(months[0].name), \(owed[1].formatted) at the end of \(months[1].name), \(now.formatted) now.")]
     }
 
-    /// What the partner owes, and how often you were together this month with what of it was theirs.
+    /// What each person owes you (or you owe them), since when; and how often you were with the partner this month,
+    /// with what of it was theirs. The partner is left out without a name.
     func partner(today: Date, name: String) -> [Insight] {
-        guard !name.isEmpty else { return [] }
-        var found: [Insight] = []
-        if partnerOwes > .zero {
-            let marked = entries.filter { $0.owed != nil }.count
-            found.append(Insight(id: "partner-owes", kind: .partner, level: .notice, title: "\(name) owes you \(partnerOwes.formatted)",
-                                 detail: "From \(marked) spend\(marked == 1 ? "" : "s") marked to be paid back, less what \(name) paid back."))
+        var found: [Insight] = people.compactMap { person -> Insight? in
+            guard person != nil || !name.isEmpty else { return nil }
+            let who = person ?? name
+            let owes = owes(person)
+            guard owes != .zero, let first = entries.filter({ Self.same($0.person, person) && ($0.kind.isWithSomeone || $0.owed != nil) })
+                .map(\.date).min() else { return nil }
+            let since = "Open since the \(ordinal(calendar.component(.day, from: first))) of \(YearMonth(first, calendar: calendar).name)."
+            return Insight(id: "owes-\(who.lowercased())", kind: .partner, level: .notice,
+                           title: owes > .zero ? "\(who) owes you \(owes.formatted)" : "You owe \(who) \(Cents(-owes.value).formatted)",
+                           detail: since)
         }
+        guard !name.isEmpty else { return found }
         let month = YearMonth(today, calendar: calendar)
         let together = spends(from: month.date(day: 1, calendar: calendar), through: dayAfter(today)).filter { $0.partner != nil }
         if !together.isEmpty {

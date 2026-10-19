@@ -74,14 +74,74 @@ enum SchemaV1: VersionedSchema {
     }
 }
 
-/// Categories of your own (`CategoryRecord`); the partner and how it was paid on an entry (`EntryRecord.partner`, `owed`, `method`).
+/// Categories of your own (`CategoryRecord`); the partner and how it was paid on an entry (`EntryRecord.partner`,
+/// `owed`, `method`). Frozen copies of what changed; plan items and settings are as in V1.
 enum SchemaV2: VersionedSchema {
     static let versionIdentifier = Schema.Version(2, 0, 0)
+    static var models: [any PersistentModel.Type] {
+        [SchemaV1.PlanItemRecord.self, EntryRecord.self, SchemaV1.SettingsRecord.self, CategoryRecord.self]
+    }
+
+    @Model final class EntryRecord {
+        @Attribute(.unique) var id: UUID
+        var date: Date
+        var amount: Int
+        var kind: String
+        var from: String?
+        var to: String?
+        var category: String?
+        var note: String?
+        var planItem: UUID?
+        var forYear: Int?
+        var forMonth: Int?
+        var movesMoney: Bool
+        var partner: String?
+        var owed: Int?
+        var method: String?
+
+        init(id: UUID, date: Date, amount: Int, kind: String, from: String?, category: String?, note: String?, movesMoney: Bool,
+             partner: String?, owed: Int?) {
+            self.id = id
+            self.date = date
+            self.amount = amount
+            self.kind = kind
+            self.from = from
+            self.category = category
+            self.note = note
+            self.movesMoney = movesMoney
+            self.partner = partner
+            self.owed = owed
+        }
+    }
+
+    @Model final class CategoryRecord {
+        @Attribute(.unique) var id: String
+        var name: String
+        var pot: String
+        var order: Int
+        var retired: Bool
+
+        init(id: String, name: String, pot: String, order: Int, retired: Bool) {
+            self.id = id
+            self.name = name
+            self.pot = pot
+            self.order = order
+            self.retired = retired
+        }
+    }
+}
+
+/// Who money is open with, on an entry (`EntryRecord.person`).
+enum SchemaV3: VersionedSchema {
+    static let versionIdentifier = Schema.Version(3, 0, 0)
     static var models: [any PersistentModel.Type] { [PlanItemRecord.self, EntryRecord.self, SettingsRecord.self, CategoryRecord.self] }
 }
 
-/// Only things added, nothing renamed or removed, so SwiftData moves the file itself.
+/// Only things added, nothing renamed or removed, so SwiftData moves the file itself, a version at a time.
 enum TallyMigration: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self] }
-    static var stages: [MigrationStage] { [.lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self)] }
+    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self, SchemaV3.self] }
+    static var stages: [MigrationStage] {
+        [.lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self),
+         .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self)]
+    }
 }

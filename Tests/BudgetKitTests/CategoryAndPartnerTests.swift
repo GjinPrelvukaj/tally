@@ -74,7 +74,7 @@ import Foundation
         store.logSpend(Cents(800), category: .goingOut, note: nil, paidWith: .bank, at: oct19, partner: .with, paysBack: true)
         store.logSpend(Cents(600), category: .food, note: nil, paidWith: .bank, at: oct19, partner: .forThem, paysBack: false)
         #expect(store.ledger().partnerOwes == Cents(2900))
-        store.partnerPaidBack(Cents(1900), at: oct19)
+        store.record(.repayment, Cents(1900), with: nil, at: oct19)
         let ledger = store.ledger()
         #expect(ledger.partnerOwes == Cents(1000))
         // 150 − 10 − 24 − 8 − 6 + 19 back.

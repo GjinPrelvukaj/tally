@@ -57,7 +57,7 @@ public final class Store {
 
     private static func container(_ configuration: ModelConfiguration) throws -> ModelContainer {
         // Through the migration plan: a file saved by an older Tally is moved to the newest version as it opens.
-        try ModelContainer(for: Schema(versionedSchema: SchemaV2.self), migrationPlan: TallyMigration.self, configurations: configuration)
+        try ModelContainer(for: Schema(versionedSchema: SchemaV3.self), migrationPlan: TallyMigration.self, configurations: configuration)
     }
 
     /// The five starter categories, in a store that has none yet: a new one, or one saved before categories were kept.
@@ -146,10 +146,14 @@ public final class Store {
                   note: note?.isEmpty == false ? note : nil, partner: partner, owed: paysBack && theirs > .zero ? theirs : nil, method: method))
     }
 
-    /// The partner paid back: the money comes into `pot` and off what they owe.
-    public func partnerPaidBack(_ amount: Cents, into pot: Pot = .main, at date: Date) {
-        guard amount > .zero else { return }
-        add(Entry(date: date, amount: amount, kind: .repayment, to: pot))
+    /// Money with a person (nil: the partner): `lent` and `paidBack` go out of `pot`, `repayment` and `borrowed` come
+    /// into it. `before`: it happened before Tally, so it is owed but moves no money now.
+    public func record(_ kind: EntryKind, _ amount: Cents, with person: String?, pot: Pot = .main, before: Bool = false, at date: Date) {
+        let name = person?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard amount > .zero, name?.isEmpty != true, kind.isWithSomeone else { return }
+        let out = kind == .lent || kind == .paidBack
+        add(Entry(date: date, amount: amount, kind: kind, from: out ? pot : nil, to: out ? nil : pot,
+                  movesMoney: !before, person: name))
     }
 
     /// Paid, at the amount actually paid. A transfer moves money `from` to `to`; a payment leaves `from`.

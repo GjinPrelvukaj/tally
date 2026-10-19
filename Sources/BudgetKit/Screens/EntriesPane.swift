@@ -22,7 +22,7 @@ struct EntriesPane: View {
             if let editing {
                 SidePanel(close: closeEditor) {
                     EntryEditor(draft: Binding { self.editing ?? editing } set: { self.editing = $0 },
-                                title: editing.original.title(ledger: ledger),
+                                title: editing.original.title(ledger: ledger, partner: partnerName),
                                 categories: ledger.categories.filter { !$0.retired || $0.id == editing.category.id },
                                 save: { store.update($0); closeEditor() },
                                 delete: { store.deleteEntry(editing.original.id); closeEditor() },
@@ -97,7 +97,7 @@ struct EntriesPane: View {
         } label: {
             HStack(spacing: Kit.Space.item) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(entry.title(ledger: ledger)).font(Kit.body).lineLimit(1)
+                    Text(entry.title(ledger: ledger, partner: partnerName)).font(Kit.body).lineLimit(1)
                     Text(entry.detail(ledger: ledger, partner: partnerName)).font(Kit.quiet).opacity(0.4).lineLimit(1)
                 }
                 Spacer(minLength: Kit.Space.item)
@@ -114,12 +114,17 @@ struct EntriesPane: View {
 }
 
 extension Entry {
-    /// What it was: a spend's note or category, a plan item's name, "Paid back" or "Balance set".
-    func title(ledger: Ledger) -> String {
-        switch kind {
+    /// What it was: a spend's note or category, a plan item's name, money with someone ("Lent to Ben"), or
+    /// "Balance set". `partner` names a person who is the partner.
+    func title(ledger: Ledger, partner: String) -> String {
+        let who = person ?? (partner.isEmpty ? "your partner" : partner)
+        return switch kind {
         case .spend: note ?? ledger.category(category)?.name ?? "Spend"
         case .adjustment: "Balance set"
-        case .repayment: "Paid back"
+        case .lent: "Lent to \(who)"
+        case .repayment: "\(capitalised(who)) paid back"
+        case .borrowed: "Borrowed from \(who)"
+        case .paidBack: "Paid back \(who)"
         default: ledger.plan.first { $0.id == planItem }?.name ?? kind.rawValue.capitalized
         }
     }
@@ -127,8 +132,9 @@ extension Entry {
     /// "the 19th · Food · Credit card · with Ana" ("Cash" in place of the pot when paid in cash).
     func detail(ledger: Ledger, partner: String) -> String {
         let shownCategory = kind == .spend && note != nil ? ledger.category(category)?.name : nil
-        let pot = kind == .income || kind == .adjustment || kind == .repayment ? to : from
-        let paid = method == .cash ? "Cash" : pot?.title
+        let pot = kind == .income || kind == .adjustment || kind == .repayment || kind == .borrowed ? to : from
+        // Owed from before Tally moved no money: no pot to name.
+        let paid = !movesMoney && kind.isWithSomeone ? "from before" : method == .cash ? "Cash" : pot?.title
         let together: String? = switch self.partner {
         case .with: "with \(partner)"
         case .half: "half \(partner)'s"
@@ -140,5 +146,7 @@ extension Entry {
     }
 
     /// Money that came in shows "+"; a balance set by hand keeps its sign.
-    var shownAmount: String { kind == .income || kind == .repayment ? "+\(amount.formatted)" : amount.formatted }
+    var shownAmount: String {
+        kind == .income || ((kind == .repayment || kind == .borrowed) && movesMoney) ? "+\(amount.formatted)" : amount.formatted
+    }
 }
