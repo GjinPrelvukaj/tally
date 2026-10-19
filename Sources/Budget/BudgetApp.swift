@@ -16,7 +16,7 @@ struct BudgetApp: App {
     private let screen: Screen
     /// `--screen payday|log`: Today with that drawer open. `--screen firstrun`: a demo not yet set up.
     private let sheet: OpenSheet?
-    /// Amounts start hidden: the setting, or `--hidden` in the demo (which never reads the real app's settings).
+    /// Amounts start hidden: as the setting says, or `--hidden` in the demo (which never reads the real app's settings).
     private let hidden: Bool
     private let demo: Bool
     /// `--screen settings` in the demo: the Settings window opens too, for a picture.
@@ -41,7 +41,8 @@ struct BudgetApp: App {
         sheet = named.flatMap(OpenSheet.init(rawValue:))
         demo = args.contains("--demo")
         settings = demo && named == "settings"
-        hidden = demo ? args.contains("--hidden") : UserDefaults.standard.bool(forKey: Preference.hideAmounts)
+        hidden = demo ? args.contains("--hidden")
+            : AmountsOnOpen.saved(in: .standard).startsHidden(lastHidden: UserDefaults.standard.bool(forKey: Preference.amountsHidden))
     }
 
     var body: some Scene {
@@ -49,7 +50,7 @@ struct BudgetApp: App {
             Group {
                 switch opened {
                 case .success(let store): RootView(store: store, today: today, screen: screen, sheet: sheet, hidden: hidden,
-                                                     canLock: !demo, showsSettings: settings)
+                                                     real: !demo, showsSettings: settings)
                 case .failure: OpenErrorView(path: Store.defaultURL.path)
                 }
             }

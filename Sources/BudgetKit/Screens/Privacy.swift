@@ -1,7 +1,8 @@
 import SwiftUI
 
 // Amounts can be hidden, all at once: every amount on screen is marked `privacySensitive`, and RootView redacts
-// them for privacy, so each shows as a soft bar. One switch for all; it is not saved, only started hidden or not.
+// them for privacy, so each shows as a soft bar. One switch for all; Tally starts as Settings says (`AmountsOnOpen`),
+// by default the way it was left.
 
 extension EnvironmentValues {
     /// Hides every amount, or shows them again.

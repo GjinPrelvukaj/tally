@@ -27,8 +27,9 @@ public struct RootView: View {
     @State private var undoHide: Task<Void, Never>?
     /// Every amount shown as a soft bar; until clicked again or Tally closes.
     @State private var amountsHidden: Bool
-    /// Never in the demo, which must not ask for the real Mac's Touch ID.
-    let canLock: Bool
+    /// The real app, not the demo: only it locks (the demo must not ask for the Mac's Touch ID) and remembers
+    /// whether amounts were hidden (the demo must not write the real app's settings).
+    let real: Bool
     @AppStorage(Preference.lock) private var lockOn = false
     /// Nothing of the money is drawn until Touch ID says it is you.
     @State private var locked: Bool
@@ -39,15 +40,15 @@ public struct RootView: View {
 
     /// `sheet` opens that drawer at once (the payday one for the first income that is due, if one is).
     /// `hidden` starts with every amount hidden (the setting, or the demo's `--hidden`).
-    /// `canLock` is false in the demo; when true, Tally starts locked if the setting is on.
+    /// `real` is false in the demo; when true, Tally starts locked if the setting is on.
     public init(store: Store, today: @escaping () -> Date, screen: Screen = .today, sheet: OpenSheet? = nil,
-                hidden: Bool = false, canLock: Bool = false, showsSettings: Bool = false) {
+                hidden: Bool = false, real: Bool = false, showsSettings: Bool = false) {
         self.store = store
         self.today = today
-        self.canLock = canLock
+        self.real = real
         self.showsSettings = showsSettings
         _amountsHidden = State(initialValue: hidden)
-        _locked = State(initialValue: canLock && UserDefaults.standard.bool(forKey: Preference.lock))
+        _locked = State(initialValue: real && UserDefaults.standard.bool(forKey: Preference.lock))
         _section = State(initialValue: screen)
         _day = State(initialValue: today())
         _payday = State(initialValue: sheet == .payday ? store.ledger().stillToPay(today: today()).first(where: \.isIncome) : nil)
@@ -175,7 +176,7 @@ public struct RootView: View {
     }
 
     private func lockAgain() {
-        guard canLock, lockOn else { return }
+        guard real, lockOn else { return }
         payday = nil
         sheet = nil
         locked = true
@@ -183,6 +184,8 @@ public struct RootView: View {
 
     private func toggleAmounts() {
         withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.change) { amountsHidden.toggle() }
+        // Kept for "As I Left Them": the next launch starts the way this one was left.
+        if real { UserDefaults.standard.set(amountsHidden, forKey: Preference.amountsHidden) }
     }
 
     private func go(_ target: Screen) {

@@ -181,12 +181,14 @@ extension ButtonStyle where Self == SidebarItemStyle {
 }
 
 /// The editor beside a list, on the pane's right: a hairline before it and a faint glass behind.
-/// Two fingers to the right push it away, as it came in.
+/// Two fingers to the right push it away, as it came in; it gives its width back as it goes, so the list
+/// beside it widens with the fingers, not only once it has closed.
 struct SidePanel<Content: View>: View {
     let close: () -> Void
     @ViewBuilder let content: Content
     @State private var pull: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private static var width: CGFloat { 320 }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -197,9 +199,11 @@ struct SidePanel<Content: View>: View {
                 .padding(.bottom, Kit.Space.edge)
                 .frame(maxHeight: .infinity, alignment: .top)
         }
-        .frame(width: 320)
+        .frame(width: Self.width)
         .background(.white.opacity(0.025))
-        .offset(x: pull)
+        // Laid out narrower as it is pushed, its content running off the window's edge.
+        .frame(width: max(0, Self.width - pull), alignment: .leading)
+        .clipped()
         .swipeToClose(.right, pull: $pull) { travel in
             if Drawer<EmptyView>.closes(dragged: travel, predicted: travel) {
                 close()
