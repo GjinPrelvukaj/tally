@@ -40,8 +40,8 @@ Touch ID, and every amount can be hidden at once (click a big number, the eye, o
 Get the latest **Tally.dmg** from [Releases](https://github.com/GjinPrelvukaj/tally/releases/latest), open it and
 drag Tally to Applications. Needs **macOS 26** or later. Signed and notarized by Apple.
 
-On first launch Tally asks what's in each account right now, then shows a starter plan (a salary, rent, bills,
-savings) for you to change into your own.
+On first launch Tally asks a few questions (your income, what you pay regularly, what you put aside, what's in each
+account right now) and makes your own plan from the answers. All of it can be changed later in the Plan.
 
 ## Build it yourself
 
