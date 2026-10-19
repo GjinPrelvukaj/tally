@@ -84,7 +84,12 @@ whole session. It only arrives while the demo is the active app, which a demo st
 - The window keeps its size under the defaults key `NSWindow Frame budget`, shared by the demo and the real app; a new
   `Window` id opened no window at all, so the id stays `budget`.
 - Scroll events and mouse clicks posted to a pid (`postToPid`) don't reach the window, so a swipe or a click on a row
-  can't be faked that way; check them by hand.
+  can't be faked that way; check them by hand. A button can be pressed in the demo alone through Accessibility
+  (`AXUIElementCreateApplication(pid)`, find the `AXButton` by title, `AXUIElementPerformAction(_, kAXPressAction)`), and a
+  field focused with `kAXFocusedAttribute`: never on the real app.
+- A focused field writes its text one last time as its view leaves. An editor whose draft binding falls back to the
+  open draft (`self.editing ?? editing`) must only write while that same draft is open, or that last write opens it
+  again and Cancel and the swipe do nothing (`EntriesPane`, `PlanPane`).
 - A `TextField` given a large font from outside (`.font` after `.background`) is drawn clipped to a small field; set the
   font on the field itself (`GlassField` in `SheetCard.swift`).
 - A glow (`.shadow`) reaches past a frame of height 0, so an empty fill still showed a line; hide it with opacity.
