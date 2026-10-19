@@ -8,6 +8,8 @@ today, what's still to pay this month, and when your emergency fund will be full
   <img src="docs/screenshots/pots.png" width="49%" alt="Pots: each account as a tube of light">
   <img src="docs/screenshots/month.png" width="49%" alt="Month: your main account as a line through the month">
   <img src="docs/screenshots/plan.png" width="49%" alt="The plan, grouped as you think of it">
+  <img src="docs/screenshots/insights.png" width="49%" alt="Insights, and questions answered on your Mac">
+  <img src="docs/screenshots/firstrun.png" width="49%" alt="The first run builds your own plan">
 </p>
 
 <sub>Screenshots use made-up example data.</sub>
@@ -24,16 +26,18 @@ today, what's still to pay this month, and when your emergency fund will be full
   planned, with the lowest point marked. Scroll back through past months.
 - **Your plan** is a list of what happens every month: what comes in, what goes to savings, what goes out.
   Things can happen on a day, in a window of days ("between the 15th and 20th"), any day, or "when the salary
-  arrives". Unpaid items carry over to the next month instead of quietly disappearing.
-- **Log a spend** in a couple of seconds (⌘N): an amount, a category, done. ⌘Z undoes the last thing you recorded.
+  arrives", and every month, every few months or once a year (a domain, an insurance). Unpaid items carry over to
+  the next month instead of quietly disappearing.
+- **Log a spend** in a couple of seconds (⌘N): an amount, a category, paid by bank card, credit card or cash, done.
+  Shared with your partner? Say so, and Tally keeps what they owe you. ⌘Z undoes the last thing you recorded.
 
-A sidebar takes you between Today, Pots, Month, Insights, your entries, the plan and People (⌘1–⌘7). People keeps what anyone owes you, or you owe them: money you lent or borrowed, paid back either way, or owed from before you started. Insights points out what needs a look: running short before payday, a pace faster than the plan, small spends that add up, a category up on last month, a spend that comes every month but isn't planned, a card owing more each month, and what your partner owes you; every one worked out exactly on your Mac. On a Mac with Apple Intelligence you can also ask it things ("what did I spend on coffee with Sam this month?"): the on-device model only reads the question, and Tally answers from your data. An entry or a plan item opens beside its list; Log a Spend and payday open as a card in the middle, over the blurred window; pull it down or click away to close it.
+A sidebar takes you between Today, Pots, Month, Insights, your entries, the plan and People (⌘1–⌘7). People keeps what anyone owes you, or you owe them: money you lent or borrowed, paid back either way, or owed from before you started. Insights points out what needs a look: running short before payday, a pace faster than the plan, small spends that add up, a category up on last month, a spend that comes every month but isn't planned, a card owing more each month, and what your partner owes you; every one worked out exactly on your Mac. On a Mac with Apple Intelligence you can also ask it things ("what did I spend on coffee with Sam this month?"): the on-device model only reads the question, and Tally answers from your data. Every screen grows with the window, from a small one to full screen. An entry or a plan item opens beside its list; Log a Spend and payday open as a card in the middle, over the blurred window; pull it down or click away to close it.
 
 ## Private by design
 
 Tally has no account, no network access and no analytics. Your data is a single file on your Mac
 (`~/Library/Application Support/Budget/Budget.store`) and never leaves it. In Settings (⌘,) it can lock behind
-Touch ID, and every amount can be hidden at once (click a big number, the eye, or press ⇧⌘H) when someone is looking.
+Touch ID, and every amount can be hidden at once (and start hidden when Tally opens) (click a big number, the eye, or press ⇧⌘H) when someone is looking.
 
 ## Download
 
