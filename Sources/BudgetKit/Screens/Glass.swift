@@ -8,10 +8,6 @@ struct Glass: View {
     let light: [[Color]]
     let position: Double
 
-    /// The window is 380 × 560 with its title bar hidden. The content sits under the title bar's
-    /// height, so it is that much shorter; the glass behind it fills the whole window.
-    static let contentSize = CGSize(width: 380, height: 560 - NSWindow.frameRect(forContentRect: .zero, styleMask: .titled).height)
-
     private let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
 
     var body: some View {
@@ -26,4 +22,11 @@ struct Glass: View {
         .overlay(shape.strokeBorder(.white.opacity(0.08), lineWidth: 1))
         .ignoresSafeArea()
     }
+}
+
+/// The window's sizes: it opens at `standard`, can be made larger, and never smaller than `minimum`
+/// (the sidebar beside Today's ring and its list).
+public enum WindowSize {
+    public static let standard = CGSize(width: 940, height: 620)
+    public static let minimum = CGSize(width: 880, height: 560)
 }

@@ -26,12 +26,12 @@ struct PotsView: View {
                 Spacer(minLength: 8)
                 if let income { arrived(income) }
             }
+            // Not the pane's full height and width: four tall slabs would read as walls, not tubes.
             tubes(ledger)
+                .frame(maxWidth: 560, maxHeight: 360)
                 .padding(.top, 26)
         }
-        .padding(.horizontal, 28)
-        .padding(.top, 18)
-        .padding(.bottom, 6)
+        .pane()
         .animation(reduceMotion ? .easeOut(duration: 0.15) : Motion.change, value: income?.id)
     }
 

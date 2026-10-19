@@ -29,8 +29,8 @@
 `Budget --demo` runs on a made-up 19 October 2026 on the starter plan, in memory (Main 640, Clothes 240, Emergency
 2 150, card −45; this month's salary items already paid), today pinned to 19 Oct 2026 12:00; it never opens the file on disk.
 
-- `--screen today|pots|month`: the page it opens on; `--screen payday` is 1 November with the salary due and its
-  sheet open, `--screen log`, `--screen plan` and `--screen entries` Today with Quick log, the Plan or this month's entries open, `--screen firstrun` a demo that
+- `--screen today|pots|month|entries|plan`: the section it opens on; `--screen payday` is 1 November with the salary due and its
+  drawer open, `--screen log` Today with Quick log open, `--screen firstrun` a demo that
   has not been set up. Other values are ignored.
 - `--after-payday`: the salary added on 1 November with its planned split, today pinned there.
 - Keys and clicks are not delivered to a demo started from a shell, so the editors inside a sheet (a plan item, a
@@ -77,9 +77,10 @@ whole session. It only arrives while the demo is the active app, which a demo st
 
 - AppKit takes a bare word on the command line (`pots` in `--screen pots`) for a file to open and then opens no
   window; `BudgetApp` registers `NSTreatUnknownArgumentsAsOpen = NO` so it doesn't.
-- With the title bar hidden the window adds the title bar's height to the content's size, so the content is
-  `Glass.contentSize` (560 minus the title bar) and the glass behind it fills the whole 560.
+- With the title bar hidden the content sits under the title bar's height; the glass behind it fills the whole window.
 - `.scrollPosition(id:)` alone did not open on the asked page; `ScrollPosition.scrollTo(id:)` in `onAppear` does.
+- The window keeps its size under the defaults key `NSWindow Frame budget`, shared by the demo and the real app; a new
+  `Window` id opened no window at all, so the id stays `budget`.
 - Scroll events and mouse clicks posted to a pid (`postToPid`) don't reach the window, so a swipe or a click on a row
   can't be faked that way; check them by hand.
 - A `TextField` given a large font from outside (`.font` after `.background`) is drawn clipped to a small field; set the
@@ -88,7 +89,7 @@ whole session. It only arrives while the demo is the active app, which a demo st
 
 ## Style
 
-- **Looks live in `Design/Kit.swift`.** Screens use its fonts (`Kit.body`, `Kit.quiet`, `Kit.title`, `Kit.amount`), buttons (`.primary`, `.secondary`, `.quiet`, `.chip`), `.toggleStyle(.glass)`, `.eyebrow()` and `.groupLabel()`. No inline font sizes, fills or stock switches in a screen; change the kit instead. Gaps come from `Kit.Space` (label 6, item 8, group 16, edge 20). Sheets are `AmountField` + content + `SheetFooter`, wrapped in `.drawer(close:)`.
+- **Looks live in `Design/Kit.swift`.** Screens use its fonts (`Kit.body`, `Kit.quiet`, `Kit.title`, `Kit.amount`), buttons (`.primary`, `.secondary`, `.quiet`, `.chip`), `.toggleStyle(.glass)`, `.eyebrow()` and `.groupLabel()`. No inline font sizes, fills or stock switches in a screen; change the kit instead. Gaps come from `Kit.Space` (label 6, item 8, group 16, edge 20). Sheets are `AmountField` + content + `SheetFooter`, wrapped in `.drawer(close:)`. A section's content uses `.pane()`; an editor beside a list sits in `SidePanel`; lists of rows use `.rowPanel()`.
 - **No lazy stacks or grids inside a sheet:** their items are made after the sheet starts rising and pop in before it arrives. The sheet container has `.geometryGroup()` so it moves as one piece.
 - The icon: edit `Scripts/make-icon.swift`, run `Scripts/make-icon.sh`, commit `Resources/AppIcon.icns`.
 
