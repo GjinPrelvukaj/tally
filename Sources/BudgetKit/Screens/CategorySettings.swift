@@ -13,14 +13,7 @@ struct CategorySettings: View {
                 Text("Name").groupLabel().frame(width: Kit.field, alignment: .leading)
                 Text("Comes out of").groupLabel()
             }
-            ScrollView {
-                VStack(alignment: .leading, spacing: Kit.Space.item) {
-                    ForEach(store.ledger().categories) { CategoryRow(category: $0, save: store.update) }
-                }
-            }
-            .scrollIndicators(.never)
-            .frame(maxHeight: 300)
-            .fixedSize(horizontal: false, vertical: true)
+            ForEach(store.ledger().categories) { CategoryRow(category: $0, save: store.update) }
             HStack(spacing: Kit.Space.item) {
                 GlassField(label: "New category", text: $newName, align: .leading, hint: "New category", secret: false)
                     .frame(width: Kit.field)

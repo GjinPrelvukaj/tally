@@ -15,6 +15,8 @@ struct InsightsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Kit.Space.item) {
                     Text("INSIGHTS").eyebrow().padding(.bottom, Kit.Space.label)
+                    // Only on a Mac with Apple Intelligence: it reads the question, code answers it.
+                    if AskReader.available { AskBox(store: store, today: today) }
                     if let headline = Insight.headline(insights) { summaryCard(headline) }
                     if insights.isEmpty {
                         Text("Nothing to point out yet. Insights come as you log what you spend.")

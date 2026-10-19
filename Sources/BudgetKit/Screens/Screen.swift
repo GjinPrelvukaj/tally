@@ -1,17 +1,17 @@
 import SwiftUI
 
-/// The sections in the sidebar, top to bottom, ⌘1 to ⌘6 apart.
+/// The sections in the sidebar, top to bottom: ⌘1 to ⌘6, and Settings ⌘, at the foot.
 public enum Screen: Int, CaseIterable, Sendable {
-    case today, pots, month, insights, entries, plan
+    case today, pots, month, insights, entries, plan, settings
 
-    /// From `--screen today|pots|month|insights|entries|plan`; anything else is nil.
+    /// From `--screen today|pots|month|insights|entries|plan|settings`; anything else is nil.
     public init?(named name: String) {
         guard let screen = Screen.allCases.first(where: { "\($0)" == name }) else { return nil }
         self = screen
     }
 
-    /// ⌘1 for the first, and so on.
-    var key: Character { Character(String(rawValue + 1)) }
+    /// ⌘1 for the first, and so on; Settings is ⌘, as on every Mac.
+    var key: Character { self == .settings ? "," : Character(String(rawValue + 1)) }
 
     var title: String {
         switch self {
@@ -21,6 +21,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .insights: "Insights"
         case .entries: "Entries"
         case .plan: "Plan"
+        case .settings: "Settings"
         }
     }
 
@@ -32,6 +33,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .insights: "sparkles"
         case .entries: "list.bullet"
         case .plan: "calendar"
+        case .settings: "gearshape"
         }
     }
 
@@ -44,6 +46,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .today, .entries: [.arrived, .ahead]
         case .plan: [Pot.main.light, .arrived, Pot.main.light]
         case .insights: [.hex(0xFBBF24), .hex(0xA78BFA), .hex(0xFBBF24)]
+        case .settings: [.hex(0x94A3B8), Pot.main.light, .hex(0x94A3B8)]
         case .pots: Pot.allCases.map(\.light)
         case .month: [.hex(0xA78BFA), .hex(0xA78BFA), .ahead]
         }

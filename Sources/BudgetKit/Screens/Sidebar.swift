@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The window's left column: the six sections (⌘1 to ⌘6), what can be spent a day, and Log a Spend.
+/// The window's left column: the six sections (⌘1 to ⌘6) and Settings (⌘,), what can be spent a day, and Log a Spend.
 struct Sidebar: View {
     let store: Store
     let today: Date
@@ -25,6 +25,7 @@ struct Sidebar: View {
                 .padding(.leading, 10).padding(.top, Kit.Space.group).padding(.bottom, 4)
             item(.entries, count: ledger.entries(in: month).count)
             item(.plan)
+            item(.settings).padding(.top, Kit.Space.group)
             Spacer()
             // Today says it already, larger.
             if section != .today, store.loadError == nil, let allowance = ledger.allowance(today: today) {

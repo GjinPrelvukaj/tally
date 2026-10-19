@@ -19,8 +19,6 @@ struct BudgetApp: App {
     /// Amounts start hidden: as the setting says, or `--hidden` in the demo (which never reads the real app's settings).
     private let hidden: Bool
     private let demo: Bool
-    /// `--screen settings` in the demo: the Settings window opens too, for a picture.
-    private let settings: Bool
 
     init() {
         let args = CommandLine.arguments
@@ -40,7 +38,6 @@ struct BudgetApp: App {
         screen = named.flatMap(Screen.init(named:)) ?? .today
         sheet = named.flatMap(OpenSheet.init(rawValue:))
         demo = args.contains("--demo")
-        settings = demo && named == "settings"
         hidden = demo ? args.contains("--hidden")
             : AmountsOnOpen.saved(in: .standard).startsHidden(lastHidden: UserDefaults.standard.bool(forKey: Preference.amountsHidden))
     }
@@ -50,7 +47,7 @@ struct BudgetApp: App {
             Group {
                 switch opened {
                 case .success(let store): RootView(store: store, today: today, screen: screen, sheet: sheet, hidden: hidden,
-                                                     real: !demo, showsSettings: settings,
+                                                     real: !demo,
                                                      demoPartner: "Sam")
                 case .failure: OpenErrorView(path: Store.defaultURL.path)
                 }
@@ -61,12 +58,5 @@ struct BudgetApp: App {
         .defaultSize(WindowSize.standard)
         .windowResizability(.contentMinSize)
         .windowBackgroundDragBehavior(.enabled)
-        // ⌘, opens it, as on every Mac app.
-        Settings {
-            SettingsView(store: try? opened.get())
-                .containerBackground(.clear, for: .window)
-        }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
     }
 }
