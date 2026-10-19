@@ -53,13 +53,13 @@ Sources/BudgetKit/Screens/Drawer.swift     Quick log, payday and Set Balance are
 Scripts/make-icon.swift / make-icon.sh  draw the app icon (ring of days on black glass) into Resources/AppIcon.icns, which is committed
 Sources/BudgetKit/Design/Living.swift  copied from Brimlight: Living, Motion, EdgeLight, GlowMeter, DayLine, LiquidDayLine, DotRing, PillButtonStyle, HoverLift, RollingDigits
 Sources/BudgetKit/Design/Spring.swift  copied from Brimlight: the damped spring
-Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
+Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours and `tint`, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
 Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `WindowSize`
 Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's pane, the drawers over the pane (the sidebar takes no clicks while one is open),
                                       the quiet error line, the Undo pill; ⌘N, ⌘1–⌘5, ⌘, (Plan), ⌘Z; `FirstRunView` before set-up.
                                       The sections read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
 Sources/BudgetKit/Screens/Sidebar.swift  Today (with how many are still to pay), Pots, Month; "Records": Entries (this month's count), Plan;
-                                      "You can spend" at the bottom (not while Today shows), and Log a Spend
+                                      "You can spend" at the bottom (not while Today shows), and Log a Spend in the section's `tint` (the left of its light, just below it)
 Sources/BudgetKit/Screens/TodayView.swift  Today: "Monday 19 October", the ring with "YOU CAN SPEND", the amount a day ("a day until the 2 000", "2 000 is late", red below 0);
                                       beside it Still to pay and "Spent today", kept together in the middle of the pane
 Sources/BudgetKit/Screens/TodayRing.swift  the month's days as dots: gone lit, paydays larger (green once come, cyan ahead), today white and largest
