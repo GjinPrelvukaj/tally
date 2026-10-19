@@ -30,7 +30,7 @@
 2 150, card −45; this month's salary items already paid), today pinned to 19 Oct 2026 12:00; it never opens the file on disk.
 
 - `--screen today|pots|month`: the page it opens on; `--screen payday` is 1 November with the salary due and its
-  sheet open, `--screen log` and `--screen plan` Today with Quick log or the Plan open, `--screen firstrun` a demo that
+  sheet open, `--screen log`, `--screen plan` and `--screen entries` Today with Quick log, the Plan or this month's entries open, `--screen firstrun` a demo that
   has not been set up. Other values are ignored.
 - `--after-payday`: the salary added on 1 November with its planned split, today pinned there.
 - Keys and clicks are not delivered to a demo started from a shell, so the editors inside a sheet (a plan item, a

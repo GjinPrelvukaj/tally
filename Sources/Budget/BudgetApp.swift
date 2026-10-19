@@ -14,7 +14,7 @@ struct BudgetApp: App {
     private let opened: Result<Store, Error>
     private let today: () -> Date
     private let screen: Screen
-    /// `--screen payday|log|plan`: Today with that sheet open. `--screen firstrun`: a demo not yet set up.
+    /// `--screen payday|log|plan|entries`: Today with that sheet open. `--screen firstrun`: a demo not yet set up.
     private let sheet: OpenSheet?
 
     init() {

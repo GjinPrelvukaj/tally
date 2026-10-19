@@ -32,6 +32,9 @@ public enum Category: String, Codable, CaseIterable, Sendable {
         default: .main
         }
     }
+
+    /// Where a spend on it comes out of: the card when it was paid by card, else its own pot.
+    public func pot(onCard: Bool) -> Pot { onCard ? .card : pot }
 }
 
 /// When in the month a plan item is due.

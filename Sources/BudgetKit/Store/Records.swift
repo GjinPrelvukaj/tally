@@ -78,6 +78,15 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
         date = entry.date
         amount = entry.amount.value
         kind = entry.kind.rawValue
+        movesMoney = entry.movesMoney
+        apply(entry)
+    }
+
+    /// Writes an edited entry over this record; its id stays.
+    func apply(_ entry: Entry) {
+        date = entry.date
+        amount = entry.amount.value
+        kind = entry.kind.rawValue
         from = entry.from?.rawValue
         to = entry.to?.rawValue
         category = entry.category?.rawValue

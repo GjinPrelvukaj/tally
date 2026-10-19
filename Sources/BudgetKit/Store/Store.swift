@@ -127,7 +127,7 @@ public final class Store {
     public func logSpend(_ amount: Cents, category: Category, note: String?, onCard: Bool, at date: Date) {
         guard amount > .zero else { return }
         let note = note?.trimmingCharacters(in: .whitespacesAndNewlines)
-        add(Entry(date: date, amount: amount, kind: .spend, from: onCard ? .card : category.pot, category: category,
+        add(Entry(date: date, amount: amount, kind: .spend, from: category.pot(onCard: onCard), category: category,
                   note: note?.isEmpty == false ? note : nil))
     }
 
@@ -168,6 +168,24 @@ public final class Store {
         guard let current = currentLedger()?.balance(pot), target != current else { return }
         let difference = target - current
         add(Entry(date: date, amount: difference, kind: .adjustment, to: pot))
+    }
+
+    /// Writes an edited entry over the saved one. Zero is never saved as money moved.
+    public func update(_ entry: Entry) {
+        guard entry.amount > .zero || entry.kind == .adjustment,
+              let records = attempt({ try context.fetch(FetchDescriptor<EntryRecord>()) }),
+              let record = records.first(where: { $0.id == entry.id }) else { return }
+        record.apply(entry)
+        commit()
+    }
+
+    /// Gone, as if it never happened: a paid plan item is due again.
+    public func deleteEntry(_ id: UUID) {
+        guard let records = attempt({ try context.fetch(FetchDescriptor<EntryRecord>()) }) else { return }
+        records.filter { $0.id == id }.forEach(context.delete)
+        // Undo goes by the ids of the last action; with one of them gone it no longer takes back all of it.
+        if undoable.contains(id) { undoable = [] }
+        commit()
     }
 
     /// Adds a new plan item at the end, or replaces an existing one in its place.
