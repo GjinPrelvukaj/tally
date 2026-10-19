@@ -33,6 +33,9 @@ public enum Screen: Int, CaseIterable, Sendable {
         }
     }
 
+    /// The colour at the left of its light, right under the sidebar's Log a Spend, which takes it.
+    var tint: Color { light[0] }
+
     /// Its colour, as light along the window's bottom edge (the mockups' colours).
     var light: [Color] {
         switch self {

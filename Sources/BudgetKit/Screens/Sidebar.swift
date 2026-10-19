@@ -34,7 +34,7 @@ struct Sidebar: View {
                 .transition(.opacity)
             }
             Button(action: log) { Label("Log a Spend", systemImage: "plus").frame(maxWidth: .infinity) }
-                .buttonStyle(.primary)
+                .buttonStyle(.primary(section.tint))
         }
         .padding(.horizontal, 12)
         .padding(.top, 20)
