@@ -18,7 +18,7 @@ struct MonthLine: View {
 
     var body: some View {
         GeometryReader { geo in
-            let frame = Frame(line: line, days: days, size: geo.size)
+            let frame = MonthLineFrame(line: line, days: days, size: geo.size)
             Canvas { ctx, size in draw(in: &ctx, frame) }
                 .onContinuousHover { phase in
                     let day: Int? = switch phase {
@@ -31,7 +31,7 @@ struct MonthLine: View {
         .accessibilityHidden(true)
     }
 
-    private func draw(in ctx: inout GraphicsContext, _ frame: Frame) {
+    private func draw(in ctx: inout GraphicsContext, _ frame: MonthLineFrame) {
         // The month's days as faint dots along zero, so the whole month is there before the line begins.
         for day in 1...max(1, days) {
             ctx.fill(Path(ellipseIn: circle(CGPoint(x: frame.x(day), y: frame.y(.zero)), radius: 1)), with: .color(.white.opacity(0.16)))
@@ -76,7 +76,7 @@ struct MonthLine: View {
     }
 
     /// The hovered day: a hairline down to it, its point, and "20th · 466,60 €" over it.
-    private func readOut(_ ctx: inout GraphicsContext, _ point: LinePoint, _ frame: Frame) {
+    private func readOut(_ ctx: inout GraphicsContext, _ point: LinePoint, _ frame: MonthLineFrame) {
         let at = frame.point(point)
         ctx.stroke(Path { $0.move(to: CGPoint(x: at.x, y: 14)); $0.addLine(to: at) }, with: .color(.white.opacity(0.15)), lineWidth: 1)
         dot(&ctx, at, radius: 3, color: .white)
@@ -104,7 +104,7 @@ struct MonthLine: View {
 
 /// Where a day and a balance sit: the month from the 1st to the last across, the line's own lowest to highest
 /// down, zero included, with room above for the payday labels and below for "today".
-private struct Frame {
+struct MonthLineFrame {
     let days: Int
     let size: CGSize
     private let line: [LinePoint]
@@ -140,8 +140,10 @@ private struct Frame {
         }
     }
 
-    /// The line's day nearest the pointer; days before the line starts read as its first.
+    /// The line's day nearest the pointer. Days before it starts (before Tally was set up) read nothing: Main isn't
+    /// known then, and the first day's balance is what was left at its end.
     func nearestDay(to pointerX: CGFloat) -> Int? {
-        line.min { abs(x($0.day) - pointerX) < abs(x($1.day) - pointerX) }?.day
+        guard let first = line.first, pointerX >= x(first.day) - (x(2) - x(1)) / 2 else { return nil }
+        return line.min { abs(x($0.day) - pointerX) < abs(x($1.day) - pointerX) }?.day
     }
 }
