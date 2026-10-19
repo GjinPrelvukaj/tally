@@ -72,6 +72,11 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
     var forYear: Int?
     var forMonth: Int?
     var movesMoney: Bool
+    /// Since `SchemaV2`: how the partner was part of a spend, and what of it they owe back, in cents.
+    var partner: String?
+    var owed: Int?
+    /// Since `SchemaV2`: bank, card or cash.
+    var method: String?
 
     init(_ entry: Entry) {
         id = entry.id
@@ -89,19 +94,51 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
         kind = entry.kind.rawValue
         from = entry.from?.rawValue
         to = entry.to?.rawValue
-        category = entry.category?.rawValue
+        category = entry.category
         note = entry.note
         planItem = entry.planItem
         forYear = entry.forMonth?.year
         forMonth = entry.forMonth?.month
         movesMoney = entry.movesMoney
+        partner = entry.partner?.rawValue
+        owed = entry.owed?.value
+        method = entry.method?.rawValue
     }
 
     var value: Entry {
         Entry(id: id, date: date, amount: Cents(amount), kind: EntryKind(rawValue: kind) ?? .adjustment,
-              from: from.flatMap(Pot.init), to: to.flatMap(Pot.init), category: category.flatMap(Category.init),
+              from: from.flatMap(Pot.init), to: to.flatMap(Pot.init), category: category,
               note: note, planItem: planItem,
-              forMonth: forYear.flatMap { year in forMonth.map { YearMonth(year, $0) } }, movesMoney: movesMoney)
+              forMonth: forYear.flatMap { year in forMonth.map { YearMonth(year, $0) } }, movesMoney: movesMoney,
+              partner: partner.flatMap(PartnerShare.init), owed: owed.map(Cents.init),
+              method: method.flatMap(PaymentMethod.init))
+    }
+}
+
+/// A category, since `SchemaV2`. `id` is the key entries name it by; `order` is where it is offered.
+@Model final class CategoryRecord {
+    @Attribute(.unique) var id: String
+    var name: String
+    var pot: String
+    var order: Int
+    var retired: Bool
+
+    init(_ category: Category, order: Int) {
+        id = category.id
+        name = category.name
+        pot = category.pot.rawValue
+        self.order = order
+        retired = category.retired
+    }
+
+    func apply(_ category: Category) {
+        name = category.name
+        pot = category.pot.rawValue
+        retired = category.retired
+    }
+
+    var value: Category {
+        Category(id: id, name: name, pot: Pot(rawValue: pot) ?? .main, retired: retired)
     }
 }
 

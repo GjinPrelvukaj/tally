@@ -35,7 +35,7 @@ struct GlassField: View {
     @FocusState private var focused: Bool
     @Environment(\.redactionReasons) private var redaction
     /// Clicked or typed into: it shows what it holds, as typing over a bar can't be right. Focus alone isn't
-    /// enough, as the Mac focuses a drawer's first field by itself.
+    /// enough, as the Mac focuses a card's first field by itself.
     @State private var revealed = false
 
     private var hiding: Bool { secret && redaction.contains(.privacy) }
@@ -106,3 +106,37 @@ struct SheetFooter<Action: View>: View {
     }
 }
 
+
+/// A pop-up of named choices, in the order given. Drawn like a field and as wide as one (`Kit.field`): a stock
+/// pop-up is only as wide as its longest choice, so its edge wouldn't line up with the fields above.
+struct GlassPicker<Value: Hashable>: View {
+    @Binding var selection: Value
+    let choices: [(Value, String)]
+    var width = Kit.field
+
+    var body: some View {
+        Menu {
+            Picker("", selection: $selection) {
+                ForEach(choices, id: \.0) { Text($0.1).tag($0.0) }
+            }
+            .pickerStyle(.inline)
+            .labelsHidden()
+        } label: {
+            HStack(spacing: 4) {
+                Text(choices.first { $0.0 == selection }?.1 ?? "").lineLimit(1)
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 9, weight: .semibold)).opacity(0.5)
+            }
+            .font(Kit.body)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .frame(width: width)
+            .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+}

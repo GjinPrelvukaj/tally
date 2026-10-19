@@ -6,10 +6,13 @@ struct EntryEditor: View {
     @Binding var draft: EntryDraft
     /// What it is ("Rent", "coffee"), over its amount.
     let title: String
+    /// The categories offered: the ones in use, and this entry's own even if it was retired.
+    let categories: [Category]
     let save: (Entry) -> Void
     let delete: () -> Void
     let cancel: () -> Void
     @State private var confirmingDelete = false
+    @Environment(\.partnerName) private var partnerName
 
     private var isAdjustment: Bool { draft.original.kind == .adjustment }
 
@@ -23,9 +26,10 @@ struct EntryEditor: View {
                             valid: draft.amountCents != nil, autofocus: true)
             }
             if draft.isSpend {
-                PaidWith(onCard: $draft.onCard)
+                PaymentMethodPicker(method: $draft.method)
+                if !partnerName.isEmpty { PartnerChoice(name: partnerName, share: $draft.partner, paysBack: $draft.paysBack) }
                 GlassField(label: "Note", text: $draft.note, align: .leading, hint: "Note (optional)", secret: false)
-                CategoryChips(chosen: draft.category) { draft.category = $0 }
+                CategoryChips(categories: categories, chosen: draft.category) { draft.category = $0 }
             }
             Spacer(minLength: 0)
             Button(isAdjustment ? "Delete…" : "Delete Entry…") { confirmingDelete = true }

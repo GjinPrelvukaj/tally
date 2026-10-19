@@ -9,6 +9,9 @@ struct TodayView: View {
     let onPayday: (Due) -> Void
     /// Asks what is owed on the card (Set Balance), from the card's own row.
     let onSetOwed: () -> Void
+    /// The partner paid back: asks how much.
+    let onPaidBack: () -> Void
+    @Environment(\.partnerName) private var partnerName
 
     var body: some View {
         let ledger = store.ledger()
@@ -37,7 +40,10 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     StillToPayList(dues: ledger.stillToPay(today: today), upcoming: ledger.upcomingIncomes(today: today),
                                    thisMonth: month, store: store, now: now, onPayday: onPayday, onSetOwed: onSetOwed)
-                    SpentToday(entries: spent)
+                    SpentToday(entries: spent, ledger: ledger)
+                    if !partnerName.isEmpty, ledger.partnerOwes > .zero {
+                        PartnerOwes(name: partnerName, owes: ledger.partnerOwes, paidBack: onPaidBack)
+                    }
                 }
                 .frame(width: 300, alignment: .topLeading)
             }
@@ -57,6 +63,7 @@ struct TodayView: View {
 /// Today's spends, newest first: what it was and how much.
 private struct SpentToday: View {
     let entries: [Entry]
+    let ledger: Ledger
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -66,8 +73,10 @@ private struct SpentToday: View {
             }
             ForEach(entries) { entry in
                 HStack(spacing: 8) {
-                    Text(entry.note ?? entry.category?.title ?? "").lineLimit(1)
-                    if entry.from == .card { Text("Card").font(Kit.quiet).opacity(0.4) }
+                    Text(entry.note ?? ledger.category(entry.category)?.name ?? "").lineLimit(1)
+                    if entry.from == .card || entry.method == .cash {
+                        Text(entry.method == .cash ? "Cash" : "Card").font(Kit.quiet).opacity(0.4)
+                    }
                     Spacer(minLength: 8)
                     Text(entry.amount.formatted).monospacedDigit().privacySensitive()
                 }
@@ -77,6 +86,23 @@ private struct SpentToday: View {
                 .accessibilityElement(children: .combine)
             }
         }
+    }
+}
+
+/// "Ana owes you 34,00 €", and Paid Back for when they do.
+private struct PartnerOwes: View {
+    let name: String
+    let owes: Cents
+    let paidBack: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("\(name) owes you").opacity(0.7)
+            Text(owes.formatted).monospacedDigit().privacySensitive()
+            Spacer(minLength: 8)
+            Button("Paid Back", action: paidBack).buttonStyle(.secondary)
+        }
+        .font(Kit.body)
     }
 }
 

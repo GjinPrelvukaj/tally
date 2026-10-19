@@ -8,13 +8,23 @@ public struct Ledger: Sendable {
     public var plan: [PlanItem]
     public var entries: [Entry]
     public var calendar: Calendar
+    /// Every category, retired ones too, in the order they are offered.
+    public var categories: [Category]
 
-    public init(start: [Pot: Cents], startMonth: YearMonth, plan: [PlanItem], entries: [Entry], calendar: Calendar) {
+    public init(start: [Pot: Cents], startMonth: YearMonth, plan: [PlanItem], entries: [Entry], calendar: Calendar,
+                categories: [Category] = Category.starters) {
         self.start = start
         self.startMonth = startMonth
         self.plan = plan
         self.entries = entries
         self.calendar = calendar
+        self.categories = categories
+    }
+
+    /// The category a spend names. One whose key is no longer known still has a name: "Other".
+    public func category(_ id: String?) -> Category? {
+        guard let id else { return nil }
+        return categories.first { $0.id == id } ?? Category(id: id, name: Category.other.name)
     }
 
     /// Starting balance, plus what came in, minus what went out. Only entries that moved money count,

@@ -37,7 +37,7 @@ struct PaydaySheet: View {
                     .disabled(!draft.canAdd)
             }
         }
-        .drawer(close: cancel)
+        .modal(close: cancel)
     }
 
     /// "Bills · 100,00 €", the amount a field. A name turns red while its amount doesn't read as money.

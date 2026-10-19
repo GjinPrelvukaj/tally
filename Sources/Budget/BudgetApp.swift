@@ -14,7 +14,7 @@ struct BudgetApp: App {
     private let opened: Result<Store, Error>
     private let today: () -> Date
     private let screen: Screen
-    /// `--screen payday|log`: Today with that drawer open. `--screen firstrun`: a demo not yet set up.
+    /// `--screen payday|log`: Today with that card open. `--screen firstrun`: a demo not yet set up.
     private let sheet: OpenSheet?
     /// Amounts start hidden: as the setting says, or `--hidden` in the demo (which never reads the real app's settings).
     private let hidden: Bool
@@ -50,7 +50,8 @@ struct BudgetApp: App {
             Group {
                 switch opened {
                 case .success(let store): RootView(store: store, today: today, screen: screen, sheet: sheet, hidden: hidden,
-                                                     real: !demo, showsSettings: settings)
+                                                     real: !demo, showsSettings: settings,
+                                                     demoPartner: "Sam")
                 case .failure: OpenErrorView(path: Store.defaultURL.path)
                 }
             }
@@ -62,7 +63,7 @@ struct BudgetApp: App {
         .windowBackgroundDragBehavior(.enabled)
         // ⌘, opens it, as on every Mac app.
         Settings {
-            SettingsView()
+            SettingsView(store: try? opened.get())
                 .containerBackground(.clear, for: .window)
         }
         .windowStyle(.hiddenTitleBar)

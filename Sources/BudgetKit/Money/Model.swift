@@ -22,21 +22,6 @@ extension Pot {
     public func balance(fromFigure figure: Cents) -> Cents { self == .card ? .zero - figure : figure }
 }
 
-/// What a spend was for. Clothes and fragrance come out of the Clothes pot, the rest out of Main.
-public enum Category: String, Codable, CaseIterable, Sendable {
-    case food, goingOut, clothes, fragrance, other
-
-    public var pot: Pot {
-        switch self {
-        case .clothes, .fragrance: .clothes
-        default: .main
-        }
-    }
-
-    /// Where a spend on it comes out of: the card when it was paid by card, else its own pot.
-    public func pot(onCard: Bool) -> Pot { onCard ? .card : pot }
-}
-
 /// When in the month a plan item is due.
 public enum Schedule: Codable, Hashable, Sendable {
     case day(Int)
@@ -89,10 +74,17 @@ public struct PlanItem: Identifiable, Hashable, Codable, Sendable {
     }
 }
 
-public enum EntryKind: String, Codable, Sendable { case income, transfer, payment, spend, adjustment, dismissed }
+/// How a spend was paid. The credit card adds to what it owes; the bank card and cash come out of the category's pot
+/// (cash is money taken out of it before), the spend remembering it was cash.
+public enum PaymentMethod: String, Codable, CaseIterable, Sendable { case bank, card, cash }
+
+/// `repayment`: the partner paid back what they owed, into `to`.
+public enum EntryKind: String, Codable, Sendable { case income, transfer, payment, spend, adjustment, dismissed, repayment }
 
 /// Something that happened. `movesMoney` is false for "paid before you started" and for `dismissed`.
 /// An adjustment has `from == nil`, `to == pot` and a signed amount.
+/// A spend names its category by key (`Category.id`), so renaming a category never rewrites history; it may say
+/// how the partner was part of it, and what of it they owe back.
 public struct Entry: Identifiable, Hashable, Codable, Sendable {
     public var id: UUID
     public var date: Date
@@ -100,15 +92,20 @@ public struct Entry: Identifiable, Hashable, Codable, Sendable {
     public var kind: EntryKind
     public var from: Pot?
     public var to: Pot?
-    public var category: Category?
+    public var category: String?
     public var note: String?
     public var planItem: UUID?
     public var forMonth: YearMonth?
     public var movesMoney: Bool
+    public var partner: PartnerShare?
+    /// What of it the partner will pay back; nil when nothing.
+    public var owed: Cents?
+    /// How a spend was paid; nil on one saved before this was kept (its pot says card or not).
+    public var method: PaymentMethod?
 
     public init(id: UUID = UUID(), date: Date, amount: Cents, kind: EntryKind, from: Pot? = nil, to: Pot? = nil,
-                category: Category? = nil, note: String? = nil, planItem: UUID? = nil, forMonth: YearMonth? = nil,
-                movesMoney: Bool = true) {
+                category: String? = nil, note: String? = nil, planItem: UUID? = nil, forMonth: YearMonth? = nil,
+                movesMoney: Bool = true, partner: PartnerShare? = nil, owed: Cents? = nil, method: PaymentMethod? = nil) {
         self.id = id
         self.date = date
         self.amount = amount
@@ -120,5 +117,8 @@ public struct Entry: Identifiable, Hashable, Codable, Sendable {
         self.planItem = planItem
         self.forMonth = forMonth
         self.movesMoney = movesMoney
+        self.partner = partner
+        self.owed = owed
+        self.method = method
     }
 }

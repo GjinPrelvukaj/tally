@@ -19,7 +19,7 @@ enum Kit {
     static let field: CGFloat = 170
     /// An amount typed in a list's row: a payday's split, the first run, a row of Still to pay.
     static let rowAmount: CGFloat = 96
-    /// The big amount at the top of a drawer, a panel or the first run.
+    /// The big amount at the top of a card, a panel or the first run.
     static let largeField: CGFloat = 160
 
     /// The only gaps used inside a sheet or screen, smallest to largest.
@@ -205,11 +205,75 @@ struct SidePanel<Content: View>: View {
         .frame(width: max(0, Self.width - pull), alignment: .leading)
         .clipped()
         .swipeToClose(.right, pull: $pull) { travel in
-            if Drawer<EmptyView>.closes(dragged: travel, predicted: travel) {
+            if Modal<EmptyView>.closes(dragged: travel, predicted: travel) {
                 close()
             } else {
                 withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.change) { pull = 0 }
             }
         }
+    }
+}
+
+/// A choice of a few, as one glass bar: each with its symbol and name, the chosen one lit, the light sliding to a
+/// new choice (cross-fading under Reduce Motion). Each keeps its whole name and the room left is shared; where even
+/// that doesn't fit it drops the symbols, and where the names don't fit it shows the symbols alone.
+struct GlassSegments<Value: Hashable>: View {
+    @Binding var selection: Value
+    /// Each choice: its value, its name and its SF Symbol.
+    let choices: [(Value, String, String)]
+    @Namespace private var lit
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private enum Look { case both, names, symbols }
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            bar(.both)
+            bar(.names)
+            bar(.symbols)
+        }
+    }
+
+    private func bar(_ look: Look) -> some View {
+        HStack(spacing: 2) {
+            ForEach(choices, id: \.0) { value, title, symbol in
+                let chosen = value == selection
+                Button {
+                    withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.change) { selection = value }
+                } label: {
+                    Group {
+                        switch look {
+                        case .both: Label(title, systemImage: symbol)
+                        case .names: Text(title)
+                        case .symbols: Image(systemName: symbol)
+                        }
+                    }
+                    .font(Kit.body)
+                    .lineLimit(1)
+                    // Never shortened: the bar picks a smaller look instead.
+                    .fixedSize()
+                    // Room at the ends, so a choice never touches the light round it.
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: Kit.control)
+                    .opacity(chosen ? 1 : 0.6)
+                    .background {
+                        if chosen {
+                            Capsule().fill(.white.opacity(0.14))
+                                .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 1))
+                                .matchedGeometryEffect(id: "lit", in: lit)
+                        }
+                    }
+                    .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .help(title)
+                .accessibilityLabel(title)
+                .accessibilityAddTraits(chosen ? .isSelected : [])
+            }
+        }
+        .padding(3)
+        .background(.white.opacity(0.05), in: Capsule())
+        .overlay(Capsule().strokeBorder(.white.opacity(0.07), lineWidth: 1))
     }
 }
