@@ -14,6 +14,14 @@ enum Kit {
     /// Every button and chip is this tall, so a row of them lines up.
     static let control: CGFloat = 28
 
+    /// The three widths a field or pop-up comes in, so none is a third of the one beside it.
+    /// Every control in a form (a field, an amount with its "€", a pop-up): their right edges line up.
+    static let field: CGFloat = 170
+    /// An amount typed in a list's row: a payday's split, the first run, a row of Still to pay.
+    static let rowAmount: CGFloat = 96
+    /// The big amount at the top of a drawer, a panel or the first run.
+    static let largeField: CGFloat = 160
+
     /// The only gaps used inside a sheet or screen, smallest to largest.
     enum Space {
         /// A label and what it labels.

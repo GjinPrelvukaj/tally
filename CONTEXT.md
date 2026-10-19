@@ -20,13 +20,15 @@ allowance, the emergency fund's goal month, the month line), the SwiftData store
 the sidebar and its five sections, the Plan's and the entries' editors in a panel on the right, and the drawers:
 Quick log, a payday, Set Balance; the first run. See `docs/mac-layout.md` for the layout as agreed.
 Undo takes back the last recorded action. A style kit (`Design/Kit.swift`) holds every size, button and switch.
+Privacy: every amount can be hidden at once, and Tally can lock behind Touch ID (Tally → Settings…, ⌘,).
 
 **Not done yet:** typing a negative balance (an overdrawn account, a card in credit); remembering Quick log's last category across launches; categories and pots of
 your own (they are fixed: Main, Clothes, Emergency fund, Card).
 
 **Not checked by hand yet** (keys and clicks don't reach a demo started from a script): clicking the sidebar,
-rows, the payday pour, ⌘N / ⌘1–⌘5 / ⌘, / ⌘Z, right-click Set Balance, the plan and entry editors, dragging a drawer down, month paging,
-resizing the window and it keeping its size.
+rows, the payday pour, ⌘N / ⌘1–⌘5 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, the plan and entry editors (their pop-ups), dragging a drawer down,
+month paging, resizing the window and it keeping its size, clicking a big number or the eye to hide amounts, the Touch ID lock
+(the demo never locks) and turning it on in Settings.
 
 ## Where things live
 
@@ -45,9 +47,11 @@ Sources/BudgetKit/Money/Tubes.swift   the sums behind Pots' tubes: `held` (the c
 Sources/BudgetKit/Money/Payday.swift  `Payday.leftInMain`: the income less everything paid out of it
 Sources/BudgetKit/Store/Records.swift  SwiftData records (plan item, entry, settings) with their conversion to and from the plain values
 Sources/BudgetKit/Store/Store.swift   `Store`: opens the database, `ledger()` snapshot, `revision`, and every action the screens call
+Sources/BudgetKit/Store/Preferences.swift  `Preference`: the keys of the two settings kept in the app's preferences (lock, hide amounts on open)
 Sources/BudgetKit/Store/Seed.swift    `Seed.plan`: the starter plan the first run seeds (fixed ids in `Seed.ID`), `Seed.goals`
 Sources/BudgetKit/Store/Demo.swift    `Store.demo(afterPayday:paydayDue:setUp:calendar:)`: a made-up 19 October on the starter plan, in memory; `paydayDue` / `afterPayday` move to 1 November with the salary due / added
-Sources/BudgetKit/Design/Kit.swift     the app's own sizes, one spacing scale (Kit.Space), buttons (.primary/.secondary/.quiet), chips, glass switch, eyebrow/group labels
+Sources/BudgetKit/Design/Kit.swift     the app's own sizes, one spacing scale (Kit.Space), buttons (.primary/.secondary/.quiet), chips, glass switch, eyebrow/group labels; the three input widths (`Kit.field` 170 for
+                                      every control in a form, `Kit.rowAmount` 96 for an amount in a list's row, `Kit.largeField` 160 for a drawer's big amount)
 Sources/BudgetKit/Screens/SheetCard.swift  sheet glass (sheetCard), GlassField, AmountField (label + field + €), SheetFooter (Cancel + action)
 Sources/BudgetKit/Screens/Drawer.swift     Quick log, payday and Set Balance are drawers (.drawer(close:)): over the pane, at most 440 wide, a handle, dragged down (>90 pt or a flick) or a click on the dim round it closes it
 Scripts/make-icon.swift / make-icon.sh  draw the app icon (ring of days on black glass) into Resources/AppIcon.icns, which is committed
@@ -56,12 +60,19 @@ Sources/BudgetKit/Design/Spring.swift  copied from Brimlight: the damped spring
 Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours and `tint`, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
 Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `WindowSize`
 Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's pane, the drawers over the pane (the sidebar takes no clicks while one is open),
-                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘5, ⌘, (Plan), ⌘Z; `FirstRunView` before set-up.
+                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘5, ⌘Z, ⇧⌘H; `FirstRunView` before set-up; `LockView` in place of everything
+                                      while locked (on open when the setting is on, and again when the Mac sleeps or its screen locks; never in the demo);
+                                      amounts hidden by `.redacted(reason: .privacy)` over the sidebar and pane (not saved; starts as the setting says)
                                       The sections read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
 Sources/BudgetKit/Screens/Sidebar.swift  Today (with how many are still to pay), Pots, Month; "Records": Entries (this month's count), Plan;
-                                      "You can spend" at the bottom (not while Today shows), and Log a Spend in the section's `tint` (the left of its light, just below it)
+                                      "You can spend" at the bottom (not while Today shows), and Log a Spend in the section's `tint` (the left of its light, just below it), beside the eye that hides amounts
 Sources/BudgetKit/Screens/TodayView.swift  Today: "Monday 19 October", the ring with "YOU CAN SPEND", the amount a day ("a day until the 2 000", "2 000 is late", red below 0);
-                                      beside it Still to pay and "Spent today", kept together in the middle of the pane
+                                      beside it Still to pay and "Spent today", kept together in the middle of the pane; under them `TodayCards`
+Sources/BudgetKit/Screens/TodayCards.swift  three cards under Today: Next pay ("the 1st · in 13 days"), Main this month (a small month line, "ends at"), Pots
+Sources/BudgetKit/Screens/Privacy.swift  hiding amounts: `toggleAmounts` in the environment, `.bigAmount()` (hidden with the rest, a click hides or shows all);
+                                      every other amount is marked `.privacySensitive()`; the month line leaves its amounts out while hidden
+Sources/BudgetKit/Screens/LockView.swift  "Tally is locked" and Unlock with Touch ID (or the Mac's password), via LocalAuthentication; asks at once
+Sources/BudgetKit/Screens/SettingsView.swift  the Settings window: Lock with Touch ID (asks first, so a lock that can't open is never set), Hide amounts when Tally opens
 Sources/BudgetKit/Screens/TodayRing.swift  the month's days as dots: gone lit, paydays larger (green once come, cyan ahead), today white and largest
 Sources/BudgetKit/Screens/StillToPayList.swift  "Still to pay": click = paid at the planned amount, ⌥-click or Edit = change it first (above 0; on the card's row
                                       "Set Owed" opens Set Balance for the card instead),

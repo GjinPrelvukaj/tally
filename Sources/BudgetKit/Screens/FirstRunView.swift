@@ -45,7 +45,7 @@ struct FirstRunView: View {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 GlassField(label: pot.title, text: text, large: true, align: .leading,
                            valid: text.wrappedValue.isEmpty || Cents.parse(text.wrappedValue) != nil, autofocus: true)
-                    .frame(width: 160)
+                    .frame(width: Kit.largeField)
                 Text("€").font(.system(size: 17, weight: .semibold)).opacity(0.5)
             }
             .padding(.top, 22)
@@ -86,7 +86,7 @@ struct FirstRunView: View {
             .buttonStyle(.plain)
             .accessibilityAddTraits(ticked ? .isSelected : [])
             if ticked {
-                GlassField(label: "\(item.name), paid", text: text, valid: Cents.parse(text.wrappedValue) != nil).frame(width: 90)
+                GlassField(label: "\(item.name), paid", text: text, valid: Cents.parse(text.wrappedValue) != nil).frame(width: Kit.rowAmount)
                 Text("€").opacity(0.55)
             } else {
                 Text(item.amount.formatted).monospacedDigit().opacity(0.4)

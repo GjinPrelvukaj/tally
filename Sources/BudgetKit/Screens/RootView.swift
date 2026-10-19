@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import SwiftUI
 
@@ -24,12 +25,29 @@ public struct RootView: View {
     /// "Undo" is on offer for a few seconds after something is recorded.
     @State private var undoShown = false
     @State private var undoHide: Task<Void, Never>?
+    /// Every amount shown as a soft bar; until clicked again or Tally closes.
+    @State private var amountsHidden: Bool
+    /// Never in the demo, which must not ask for the real Mac's Touch ID.
+    let canLock: Bool
+    @AppStorage(Preference.lock) private var lockOn = false
+    /// Nothing of the money is drawn until Touch ID says it is you.
+    @State private var locked: Bool
+    /// `--screen settings` in the demo: the Settings window opens too, for a picture.
+    let showsSettings: Bool
+    @Environment(\.openSettings) private var openSettings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// `sheet` opens that drawer at once (the payday one for the first income that is due, if one is).
-    public init(store: Store, today: @escaping () -> Date, screen: Screen = .today, sheet: OpenSheet? = nil) {
+    /// `hidden` starts with every amount hidden (the setting, or the demo's `--hidden`).
+    /// `canLock` is false in the demo; when true, Tally starts locked if the setting is on.
+    public init(store: Store, today: @escaping () -> Date, screen: Screen = .today, sheet: OpenSheet? = nil,
+                hidden: Bool = false, canLock: Bool = false, showsSettings: Bool = false) {
         self.store = store
         self.today = today
+        self.canLock = canLock
+        self.showsSettings = showsSettings
+        _amountsHidden = State(initialValue: hidden)
+        _locked = State(initialValue: canLock && UserDefaults.standard.bool(forKey: Preference.lock))
         _section = State(initialValue: screen)
         _day = State(initialValue: today())
         _payday = State(initialValue: sheet == .payday ? store.ledger().stillToPay(today: today()).first(where: \.isIncome) : nil)
@@ -41,13 +59,17 @@ public struct RootView: View {
 
     public var body: some View {
         Group {
-            if store.isSetUp {
+            if locked {
+                LockView { withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { locked = false } }
+            } else if store.isSetUp {
                 HStack(spacing: 0) {
                     Sidebar(store: store, today: day, section: section, go: go, log: { show(.log) })
                         .allowsHitTesting(!modal)
                     Rectangle().fill(.white.opacity(0.06)).frame(width: 1)
                     pane
                 }
+                .redacted(reason: amountsHidden ? .privacy : [])
+                .environment(\.toggleAmounts, toggleAmounts)
             } else {
                 FirstRunView(store: store, today: today()).frame(width: 380, height: 520)
             }
@@ -55,12 +77,17 @@ public struct RootView: View {
         // Opens at the standard size; never smaller than the minimum.
         .frame(minWidth: WindowSize.minimum.width, idealWidth: WindowSize.standard.width, maxWidth: .infinity,
                minHeight: WindowSize.minimum.height, idealHeight: WindowSize.standard.height, maxHeight: .infinity)
-        .background { shortcuts }
+        .background { if !locked { shortcuts } }
         .background {
             Glass(light: store.isSetUp ? Screen.allCases.map(\.light) : [Screen.today.light],
                   position: store.isSetUp ? Double(section.rawValue) : 0)
         }
         .onChange(of: store.recordings) { offerUndo() }
+        .onAppear { if showsSettings { openSettings() } }
+        // Locks again when the Mac sleeps or its screen locks, so it is never left open on a Mac someone else wakes.
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.willSleepNotification)) { _ in lockAgain() }
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.screensDidSleepNotification)) { _ in lockAgain() }
+        .onReceive(DistributedNotificationCenter.default().publisher(for: Notification.Name("com.apple.screenIsLocked"))) { _ in lockAgain() }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: DispatchQueue.main)) { _ in
             day = today()
         }
@@ -91,7 +118,7 @@ public struct RootView: View {
         }
     }
 
-    /// ⌘N logs a spend, ⌘1 to ⌘5 go to a section (⌘, to the plan); hidden buttons, as the window has no menu of its own.
+    /// ⌘N logs a spend, ⌘1 to ⌘5 go to a section, ⇧⌘H hides amounts; hidden buttons, as the window has no menu of its own.
     @ViewBuilder private var shortcuts: some View {
         if store.isSetUp {
             Group {
@@ -99,7 +126,7 @@ public struct RootView: View {
                 ForEach(Screen.allCases, id: \.self) { screen in
                     Button(screen.title) { if !modal { go(screen) } }.keyboardShortcut(KeyEquivalent(screen.key))
                 }
-                Button("Plan") { if !modal { go(.plan) } }.keyboardShortcut(",")
+                Button("Hide Amounts") { toggleAmounts() }.keyboardShortcut("h", modifiers: [.command, .shift])
                 // Not while a drawer is open: there ⌘Z belongs to the text being typed.
                 Button("Undo") { if !modal { undo() } }.keyboardShortcut("z")
             }
@@ -145,6 +172,17 @@ public struct RootView: View {
             SetBalanceSheet(pot: pot, balance: store.ledger().balance(pot),
                             set: { store.setBalance(pot, to: $0, at: today()); close() }, cancel: close)
         }
+    }
+
+    private func lockAgain() {
+        guard canLock, lockOn else { return }
+        payday = nil
+        sheet = nil
+        locked = true
+    }
+
+    private func toggleAmounts() {
+        withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.change) { amountsHidden.toggle() }
     }
 
     private func go(_ target: Screen) {

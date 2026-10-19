@@ -23,7 +23,7 @@ public struct Cents: Hashable, Comparable, Sendable, Codable, AdditiveArithmetic
     /// `2 400`: the euros alone, without sign or cents, as an income is named ("the 2 400").
     /// "250 €" for a round amount, "63,40 €" otherwise: quieter in a list of plans.
     public var short: String {
-        value % 100 == 0 ? "\(wholeEuros)\u{00A0}€" : formatted
+        value % 100 == 0 ? "\(value < 0 ? "\u{2212}" : "")\(wholeEuros)\u{00A0}€" : formatted
     }
 
     public var wholeEuros: String {

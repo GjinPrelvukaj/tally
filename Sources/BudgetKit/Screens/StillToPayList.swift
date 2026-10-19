@@ -66,7 +66,6 @@ private struct DueRow: View {
     @State private var hovering = false
     /// The amount being typed, while the row is being edited.
     @State private var typed: String?
-    @FocusState private var fieldFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -74,7 +73,7 @@ private struct DueRow: View {
             let title = early ? "\(due.item.amount.wholeEuros) · from the \(ordinal(due.arrivesFrom ?? 1))"
                 : due.isIncome ? "\(due.item.amount.wholeEuros) arrived?" : due.item.name
             let month = Text(from.map { " · from \($0.name)" } ?? "").foregroundStyle(.white.opacity(0.4))
-            Text("\(title)\(month)").lineLimit(1)
+            Text("\(title)\(month)").lineLimit(1).privacySensitive(due.isIncome)
             Spacer(minLength: 8)
             if typed != nil {
                 editor
@@ -90,7 +89,7 @@ private struct DueRow: View {
                     Button(paysOffCard ? "Set Owed" : "Edit", action: paysOffCard ? setOwed : edit)
                         .buttonStyle(.plain).font(Kit.quiet).opacity(0.55).transition(.opacity)
                 }
-                Text(due.item.amount.formatted).monospacedDigit()
+                Text(due.item.amount.formatted).monospacedDigit().privacySensitive()
             }
         }
         .font(Kit.body)
@@ -111,12 +110,9 @@ private struct DueRow: View {
 
     private var editor: some View {
         HStack(spacing: 6) {
-            TextField("", text: Binding { typed ?? "" } set: { typed = $0 })
-                .textFieldStyle(.plain)
-                .multilineTextAlignment(.trailing)
-                .monospacedDigit()
-                .frame(width: 72)
-                .focused($fieldFocused)
+            GlassField(label: due.item.name, text: Binding { typed ?? "" } set: { typed = $0 },
+                       valid: typed.flatMap(Cents.parsePositive) != nil, autofocus: true)
+                .frame(width: Kit.rowAmount)
                 .onSubmit(save)
                 .onExitCommand { typed = nil }
             Text("€").opacity(0.55)
@@ -124,7 +120,6 @@ private struct DueRow: View {
                 .buttonStyle(.pill(fill: .white.opacity(0.14), height: 22, padding: 10))
                 .disabled(typed.flatMap(Cents.parsePositive) == nil)
         }
-        .onAppear { fieldFocused = true }
     }
 
     private var paysOffCard: Bool { due.item.to == .card }

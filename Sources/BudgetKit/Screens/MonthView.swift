@@ -109,6 +109,7 @@ private struct MonthPage: View {
             if let point {
                 RollingDigits(text: point.balance.formatted, font: .system(size: 30, weight: .semibold))
                     .foregroundStyle(point.balance < .zero ? Color.red : .white)
+                    .bigAmount()
                 Text("lowest point · \(point.day == todayDay ? "today" : "the \(ordinal(point.day))")")
                     .font(.system(size: 12)).opacity(0.55)
             } else {
@@ -123,7 +124,7 @@ private struct MonthPage: View {
         HStack {
             Text(name).opacity(0.55)
             Spacer(minLength: 8)
-            Text(value).monospacedDigit().opacity(0.88)
+            Text(value).monospacedDigit().opacity(0.88).privacySensitive()
         }
         .font(.system(size: 13))
         .frame(height: 26)
