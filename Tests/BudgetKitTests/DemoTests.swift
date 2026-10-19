@@ -30,17 +30,22 @@ import Foundation
 }
 
 @Suite struct ScreenTests {
-    @Test func arrowsStopAtTheEnds() {
-        #expect(Screen.today.previous == .today)
-        #expect(Screen.today.next == .pots)
-        #expect(Screen.pots.next == .month)
-        #expect(Screen.month.next == .month)
-        #expect(Screen.month.previous == .pots)
+    @Test func fiveSectionsInTheSidebarsOrder() {
+        #expect(Screen.allCases == [.today, .pots, .month, .entries, .plan])
+        // ⌘1 to ⌘5.
+        #expect(Screen.allCases.map(\.key) == ["1", "2", "3", "4", "5"])
     }
 
     @Test func namedFromTheCommandLine() {
         #expect(Screen(named: "pots") == .pots)
         #expect(Screen(named: "month") == .month)
+        #expect(Screen(named: "entries") == .entries)
+        #expect(Screen(named: "plan") == .plan)
         #expect(Screen(named: "payday") == nil)
+    }
+
+    @Test func aDaySaysItsNameInEnglish() {
+        #expect(dayTitle(Fixtures.date(2026, 10, 19), calendar: Fixtures.calendar) == "Monday 19 October")
+        #expect(dayTitle(Fixtures.date(2026, 11, 1), calendar: Fixtures.calendar) == "Sunday 1 November")
     }
 }

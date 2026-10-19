@@ -4,8 +4,6 @@ import SwiftUI
 /// (or when the dimmed space above it is clicked, which its host handles).
 struct Drawer<Content: View>: View {
     var light: [Color]
-    /// Takes all the height it is given (Plan) instead of hugging its content.
-    var fill: Bool
     let close: () -> Void
     @ViewBuilder let content: Content
     /// How far it has been pulled down.
@@ -24,7 +22,6 @@ struct Drawer<Content: View>: View {
                 .padding(.horizontal, Kit.Space.edge)
                 .padding(.top, Kit.Space.item)
                 .padding(.bottom, Kit.Space.edge)
-                .frame(maxHeight: fill ? .infinity : nil, alignment: .top)
         }
         .frame(maxWidth: .infinity)
         .sheetCard(light: light)
@@ -46,8 +43,8 @@ struct Drawer<Content: View>: View {
 
 extension View {
     /// This view as a drawer that `close` takes away.
-    func drawer(close: @escaping () -> Void, fill: Bool = false,
+    func drawer(close: @escaping () -> Void,
                 light: [Color] = [.arrived, Pot.main.light, .arrived]) -> some View {
-        Drawer(light: light, fill: fill, close: close) { self }
+        Drawer(light: light, close: close) { self }
     }
 }

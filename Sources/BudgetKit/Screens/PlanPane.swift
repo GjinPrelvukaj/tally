@@ -1,12 +1,11 @@
 import SwiftUI
 
-/// The monthly plan, grouped as you think of it. A row opens its editor; "Add Item" opens a blank one.
-/// Done or Escape closes it.
-struct PlanSheet: View {
+/// The monthly plan, grouped as you think of it. A row opens its editor in a panel on the right, the plan still
+/// beside it; "Add Item" opens a blank one.
+struct PlanPane: View {
     let store: Store
     let month: YearMonth
-    let close: () -> Void
-    /// The item being edited, in place of the list.
+    /// The item being edited, in the panel.
     @State private var editing: PlanItemDraft?
     @State private var isNew = false
     /// How tall the fade above the buttons is.
@@ -14,28 +13,22 @@ struct PlanSheet: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            list
-                .drawer(close: close, fill: true, light: [Pot.main.light, .arrived, Pot.main.light])
-                // Under an open editor it sinks back: a little smaller, darker, out of reach.
-                .scaleEffect(editing == nil ? 1 : 0.94, anchor: .top)
-                .brightness(editing == nil ? 0 : -0.12)
-                .allowsHitTesting(editing == nil)
+        HStack(spacing: 0) {
+            list.pane()
             if let editing {
-                Color.black.opacity(0.35)
-                    .onTapGesture(perform: closeEditor)
-                    .accessibilityHidden(true)
-                    .transition(.opacity)
-                PlanItemEditor(draft: Binding { self.editing ?? editing } set: { self.editing = $0 },
-                               incomes: store.ledger().plan.filter { $0.kind == .income && $0.id != editing.id },
-                               month: month, isNew: isNew,
-                               wasIncome: store.ledger().plan.first { $0.id == editing.id }?.kind == .income,
-                               waiting: store.ledger().waiting(on: editing.id).count,
-                               save: { store.save($0); closeEditor() },
-                               delete: { store.delete(editing.id); closeEditor() },
-                               cancel: closeEditor)
-                    .drawer(close: closeEditor)
-                    .transition(reduceMotion ? .opacity : .move(edge: .bottom))
+                SidePanel {
+                    PlanItemEditor(draft: Binding { self.editing ?? editing } set: { self.editing = $0 },
+                                   incomes: store.ledger().plan.filter { $0.kind == .income && $0.id != editing.id },
+                                   month: month, isNew: isNew,
+                                   wasIncome: store.ledger().plan.first { $0.id == editing.id }?.kind == .income,
+                                   waiting: store.ledger().waiting(on: editing.id).count,
+                                   save: { store.save($0); closeEditor() },
+                                   delete: { store.delete(editing.id); closeEditor() },
+                                   cancel: closeEditor)
+                        // Another row clicked starts afresh.
+                        .id(editing.id)
+                }
+                .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
             }
         }
     }
@@ -72,15 +65,9 @@ struct PlanSheet: View {
                     LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: fade)
                 }
             }
-            HStack {
-                Button("Add Item") { open(PlanItemDraft(), new: true) }
-                    .buttonStyle(.secondary)
-                Spacer()
-                Button("Done", action: close)
-                    .buttonStyle(.primary)
-                    .keyboardShortcut(.cancelAction)
-            }
-            .padding(.top, Kit.Space.label)
+            Button("Add Item") { open(PlanItemDraft(), new: true) }
+                .buttonStyle(.secondary)
+                .padding(.top, Kit.Space.label)
         }
     }
 
@@ -101,8 +88,7 @@ struct PlanSheet: View {
                     row(item, plan: plan)
                 }
             }
-            .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.white.opacity(0.06), lineWidth: 1))
+            .rowPanel()
         }
     }
 
@@ -118,6 +104,7 @@ struct PlanSheet: View {
             .opacity(item.paused ? 0.4 : 0.9)
             .padding(.horizontal, 12)
             .frame(height: 34)
+            .background(.white.opacity(editing?.id == item.id ? 0.06 : 0))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

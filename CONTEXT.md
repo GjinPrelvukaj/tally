@@ -5,7 +5,7 @@ Read this first, then [AGENTS.md](AGENTS.md) for how to work here.
 ## What it is
 
 A small native macOS app for one person's monthly money: a monthly plan, what actually happened, and a daily
-allowance, in one glass window with three screens (Today, Pots, Month). Swift 6, SwiftUI, SwiftData, macOS 26 or
+allowance, in one glass window: a sidebar of five sections (Today, Pots, Month, Entries, Plan) and the chosen one beside it. Swift 6, SwiftUI, SwiftData, macOS 26 or
 later, no network, no third-party packages. Its look (black glass, colour as light from the bottom edge, springs,
 nothing moves unless something happens) comes from the author's app Brimlight.
 
@@ -17,20 +17,21 @@ Keep the data path: renaming it would make the app open empty on a Mac that alre
 
 Everything below is built: the money logic (balances, "still to pay" with carry-over, next income, the daily
 allowance, the emergency fund's goal month, the month line), the SwiftData store, a starter plan for the first run,
-the three screens, and the drawers: Quick log, the Plan with its item editor, a payday, Set Balance, the first run,
-a month's entries with their editor.
+the sidebar and its five sections, the Plan's and the entries' editors in a panel on the right, and the drawers:
+Quick log, a payday, Set Balance; the first run. See `docs/mac-layout.md` for the layout as agreed.
 Undo takes back the last recorded action. A style kit (`Design/Kit.swift`) holds every size, button and switch.
 
 **Not done yet:** typing a negative balance (an overdrawn account, a card in credit); remembering Quick log's last category across launches; categories and pots of
 your own (they are fixed: Main, Clothes, Emergency fund, Card).
 
-**Not checked by hand yet** (keys and clicks don't reach a demo started from a script): swiping the pager, clicking
-rows, the payday pour, ⌘N / ⌘, / ⌘Z, right-click Set Balance, the plan editor, the entry editor, dragging a drawer down, month paging.
+**Not checked by hand yet** (keys and clicks don't reach a demo started from a script): clicking the sidebar,
+rows, the payday pour, ⌘N / ⌘1–⌘5 / ⌘, / ⌘Z, right-click Set Balance, the plan and entry editors, dragging a drawer down, month paging,
+resizing the window and it keeping its size.
 
 ## Where things live
 
 ```
-Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, 380 × 560; closing it quits), opens `Store()` or the demo, `--screen` (`payday`, `log`, `plan`, `entries`: Today with that sheet open; `firstrun`: a demo not yet set up)
+Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|entries|plan`: that section; `payday`, `log`: Today with that drawer open; `firstrun`: a demo not yet set up)
 Sources/BudgetKit/Money/Cents.swift   money in whole cents: formatting (`formatted`, `wholeEuros` "2 000", `editable` "2 450,17" for a field), parsing, floor division
 Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027")
 Sources/BudgetKit/Money/Model.swift   Pot, Category, Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)`)
@@ -48,16 +49,19 @@ Sources/BudgetKit/Store/Seed.swift    `Seed.plan`: the starter plan the first ru
 Sources/BudgetKit/Store/Demo.swift    `Store.demo(afterPayday:paydayDue:setUp:calendar:)`: a made-up 19 October on the starter plan, in memory; `paydayDue` / `afterPayday` move to 1 November with the salary due / added
 Sources/BudgetKit/Design/Kit.swift     the app's own sizes, one spacing scale (Kit.Space), buttons (.primary/.secondary/.quiet), chips, glass switch, eyebrow/group labels
 Sources/BudgetKit/Screens/SheetCard.swift  sheet glass (sheetCard), GlassField, AmountField (label + field + €), SheetFooter (Cancel + action)
-Sources/BudgetKit/Screens/Drawer.swift     every sheet is a drawer (.drawer(close:)): flush with the bottom edge, a handle, dragged down (>90 pt or a flick) or a click on the dim above closes it; Plan's item editor stacks on Plan, which sinks back (0.94, darker)
+Sources/BudgetKit/Screens/Drawer.swift     Quick log, payday and Set Balance are drawers (.drawer(close:)): over the pane, at most 440 wide, a handle, dragged down (>90 pt or a flick) or a click on the dim round it closes it
 Scripts/make-icon.swift / make-icon.sh  draw the app icon (ring of days on black glass) into Resources/AppIcon.icns, which is committed
 Sources/BudgetKit/Design/Living.swift  copied from Brimlight: Living, Motion, EdgeLight, GlowMeter, DayLine, LiquidDayLine, DotRing, PillButtonStyle, HoverLift, RollingDigits
 Sources/BudgetKit/Design/Spring.swift  copied from Brimlight: the damped spring
-Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month), titles, each screen's edge-light colours, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
-Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading with the pager
-Sources/BudgetKit/Screens/RootView.swift  the pager (paging ScrollView, arrow keys, page dots), the quiet error line, the "Plan" and "+" buttons beside the dots (⌘, and ⌘N too); `FirstRunView` before set-up.
-                                      The scroll position lives in `PagerPosition`, read only by the light and the dots, so scrolling never redraws
-                                      the screens; the screens read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
-Sources/BudgetKit/Screens/TodayView.swift  Today: the ring with "YOU CAN SPEND", the amount a day ("a day until the 2 000", "2 000 is late", red below 0)
+Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
+Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `WindowSize`
+Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's pane, the drawers over the pane (the sidebar takes no clicks while one is open),
+                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘5, ⌘, (Plan), ⌘Z; `FirstRunView` before set-up.
+                                      The sections read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
+Sources/BudgetKit/Screens/Sidebar.swift  Today (with how many are still to pay), Pots, Month; "Records": Entries (this month's count), Plan;
+                                      "You can spend" at the bottom (not while Today shows), and Log a Spend
+Sources/BudgetKit/Screens/TodayView.swift  Today: "Monday 19 October", the ring with "YOU CAN SPEND", the amount a day ("a day until the 2 000", "2 000 is late", red below 0);
+                                      beside it Still to pay and "Spent today", kept together in the middle of the pane
 Sources/BudgetKit/Screens/TodayRing.swift  the month's days as dots: gone lit, paydays larger (green once come, cyan ahead), today white and largest
 Sources/BudgetKit/Screens/StillToPayList.swift  "Still to pay": click = paid at the planned amount, ⌥-click or Edit = change it first (above 0; on the card's row
                                       "Set Owed" opens Set Balance for the card instead),
@@ -74,16 +78,17 @@ Sources/BudgetKit/Screens/PaydaySheet.swift  the payday sheet (`PaydayDraft` hol
 Sources/BudgetKit/Screens/MonthView.swift  Month: "MAIN ACCOUNT", "‹ October 2026 ›", one page per month from the start month to this one
                                       (a vertical paging ScrollView, oldest at the top: scrolling up goes back; ⌘← / ⌘→ while Month shows);
                                       each page the lowest point ("lowest point · the 19th" / "today"), the line, and left at end of month,
-                                      saved ("Saved this month" on the current month, "Saved" on past ones), and on the current month only the emergency fund's goal month; last, "Entries" with their count opens that month's list
+                                      saved ("Saved this month" on the current month, "Saved" on past ones), and on the current month only the emergency fund's goal month
 Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's days as faint dots along zero, solid and lit where it happened,
                                       dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out
 Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid)
 Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, "Paid with" Bank Card / Credit Card (`PaidWith`), note, then five category chips
                                       (`CategoryChips`; a tap logs and closes, so everything else comes above them); Return logs under the category used last
-Sources/BudgetKit/Screens/EntriesSheet.swift  a month's entries (the "Entries" row on Month), newest first; a row opens `EntryEditor`, stacked like Plan's
+Sources/BudgetKit/Screens/EntriesPane.swift  Entries: a month's entries newest first, "‹ October 2026 ›" back to the first month; a row opens `EntryEditor`
+                                      in a `SidePanel` on the right; `Entry.title`, `detail`, `shownAmount` say a row
 Sources/BudgetKit/Screens/EntryEditor.swift  one entry: a spend's amount, how it was paid, note and category; a payment's or income's amount; Delete
                                       (a paid plan item is due again); a balance set by hand can only be deleted. `EntryDraft.swift` holds its typed values
-Sources/BudgetKit/Screens/PlanSheet.swift  the plan under "Comes in / Goes to savings / Goes out / Every day" (`PlanGroup`); a row opens `PlanItemEditor`
+Sources/BudgetKit/Screens/PlanPane.swift  Plan: the plan under "Comes in / Goes to savings / Goes out / Every day" (`PlanGroup`); a row opens `PlanItemEditor` in a `SidePanel`
                                       (`PlanItemDraft` holds the typed values); Delete keeps the item's past payments
 Sources/BudgetKit/Screens/PlanItemEditor.swift  the editor for one plan item (opened from the Plan); `PlanItemDraft.swift` holds its typed values
 Sources/BudgetKit/Screens/SetBalanceSheet.swift  right-click a tube on Pots, "Set Balance…": the card asks what is owed; the difference is an adjustment

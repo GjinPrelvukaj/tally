@@ -4,10 +4,10 @@
 today, what's still to pay this month, and when your emergency fund will be full.
 
 <p>
-  <img src="docs/screenshots/today.png" width="24%" alt="Today: what you can spend each day until the next pay">
-  <img src="docs/screenshots/pots.png" width="24%" alt="Pots: each account as a tube of light">
-  <img src="docs/screenshots/month.png" width="24%" alt="Month: your main account as a line through the month">
-  <img src="docs/screenshots/plan.png" width="24%" alt="The plan, grouped as you think of it">
+  <img src="docs/screenshots/today.png" width="49%" alt="Today: what you can spend each day until the next pay">
+  <img src="docs/screenshots/pots.png" width="49%" alt="Pots: each account as a tube of light">
+  <img src="docs/screenshots/month.png" width="49%" alt="Month: your main account as a line through the month">
+  <img src="docs/screenshots/plan.png" width="49%" alt="The plan, grouped as you think of it">
 </p>
 
 <sub>Screenshots use made-up example data.</sub>
@@ -27,7 +27,7 @@ today, what's still to pay this month, and when your emergency fund will be full
   arrives". Unpaid items carry over to the next month instead of quietly disappearing.
 - **Log a spend** in a couple of seconds (⌘N): an amount, a category, done. ⌘Z undoes the last thing you recorded.
 
-Everything opens as a drawer from the bottom of the window; drag it down or click above it to close.
+A sidebar takes you between Today, Pots, Month, your entries and the plan (⌘1–⌘5). An entry or a plan item opens beside its list; Log a Spend and payday rise as a drawer you drag down or click away.
 
 ## Private by design
 

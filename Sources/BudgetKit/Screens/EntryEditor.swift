@@ -4,6 +4,8 @@ import SwiftUI
 /// a payment or income only its amount; a balance set by hand can only be deleted.
 struct EntryEditor: View {
     @Binding var draft: EntryDraft
+    /// What it is ("Rent", "coffee"), over its amount.
+    let title: String
     let save: (Entry) -> Void
     let delete: () -> Void
     let cancel: () -> Void
@@ -17,7 +19,7 @@ struct EntryEditor: View {
                 Text("BALANCE SET").eyebrow()
                 Text("A balance set by hand. Delete it to take it back.").font(Kit.body).opacity(0.7)
             } else {
-                AmountField(label: draft.isSpend ? "Spent" : "Amount", text: $draft.amount,
+                AmountField(label: title, text: $draft.amount,
                             valid: draft.amountCents != nil, autofocus: true)
             }
             if draft.isSpend {
@@ -25,6 +27,7 @@ struct EntryEditor: View {
                 GlassField(label: "Note", text: $draft.note, align: .leading, hint: "Note (optional)")
                 CategoryChips(chosen: draft.category) { draft.category = $0 }
             }
+            Spacer(minLength: 0)
             Button(isAdjustment ? "Delete…" : "Delete Entry…") { confirmingDelete = true }
                 .buttonStyle(.plain).font(Kit.body).foregroundStyle(.red.opacity(0.85))
                 .confirmationDialog("Delete this entry?", isPresented: $confirmingDelete) {

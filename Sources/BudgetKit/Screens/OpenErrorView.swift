@@ -16,7 +16,7 @@ public struct OpenErrorView: View {
                 .padding(.top, 8)
         }
         .padding(28)
-        .frame(width: Glass.contentSize.width, height: Glass.contentSize.height)
+        .frame(minWidth: WindowSize.minimum.width, maxWidth: .infinity, minHeight: WindowSize.minimum.height, maxHeight: .infinity)
         .background { Glass(light: [[.hex(0xFB7185), .hex(0xFBBF24), .hex(0xFB7185)]], position: 0) }
     }
 }

@@ -40,7 +40,7 @@ public struct YearMonth: Hashable, Comparable, Codable, Sendable {
     /// "Mar 2027".
     public var shortName: String { "\(Self.english.shortStandaloneMonthSymbols[month - 1]) \(year)" }
 
-    private static let english: Calendar = {
+    fileprivate static let english: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = Locale(identifier: "en")
         return calendar
@@ -49,4 +49,11 @@ public struct YearMonth: Hashable, Comparable, Codable, Sendable {
     private func firstDay(calendar: Calendar) -> Date {
         calendar.date(from: DateComponents(year: year, month: month, day: 1))!
     }
+}
+
+/// "Monday 19 October", in English whatever the Mac's language.
+public func dayTitle(_ date: Date, calendar: Calendar) -> String {
+    let parts = calendar.dateComponents([.weekday, .day, .month], from: date)
+    let english = YearMonth.english
+    return "\(english.weekdaySymbols[parts.weekday! - 1]) \(parts.day!) \(english.standaloneMonthSymbols[parts.month! - 1])"
 }

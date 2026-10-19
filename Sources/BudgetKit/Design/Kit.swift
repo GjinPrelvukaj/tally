@@ -135,3 +135,57 @@ struct GlassSwitchStyle: ToggleStyle {
 extension ToggleStyle where Self == GlassSwitchStyle {
     static var glass: GlassSwitchStyle { GlassSwitchStyle() }
 }
+
+extension View {
+    /// A section's content in the pane right of the sidebar: the same room round every one.
+    func pane() -> some View {
+        padding(.horizontal, 40)
+            .padding(.top, 36)
+            .padding(.bottom, Kit.Space.edge)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    /// A list's rows on one quiet rounded panel (the plan's groups, the month's entries).
+    func rowPanel() -> some View {
+        background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.white.opacity(0.06), lineWidth: 1))
+    }
+}
+
+/// A section in the sidebar: its symbol and name, a count on the right, the chosen one on a soft highlight.
+struct SidebarItemStyle: ButtonStyle {
+    var chosen: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Kit.body)
+            .opacity(chosen ? 0.95 : 0.65)
+            .padding(.horizontal, 10)
+            .frame(height: 30)
+            .background(.white.opacity(chosen ? 0.1 : configuration.isPressed ? 0.05 : 0),
+                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .contentShape(Rectangle())
+    }
+}
+
+extension ButtonStyle where Self == SidebarItemStyle {
+    static func sidebarItem(chosen: Bool) -> SidebarItemStyle { SidebarItemStyle(chosen: chosen) }
+}
+
+/// The editor beside a list, on the pane's right: a hairline before it and a faint glass behind.
+struct SidePanel<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Rectangle().fill(.white.opacity(0.06)).frame(width: 1)
+            content
+                .padding(.horizontal, Kit.Space.edge)
+                .padding(.top, 36)
+                .padding(.bottom, Kit.Space.edge)
+                .frame(maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 320)
+        .background(.white.opacity(0.025))
+    }
+}
