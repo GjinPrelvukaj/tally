@@ -35,7 +35,7 @@ Sources/BudgetKit/Money/Cents.swift   money in whole cents: formatting (`formatt
 Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027")
 Sources/BudgetKit/Money/Model.swift   Pot, Category, Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)`)
 Sources/BudgetKit/Money/Ledger.swift  Ledger: start balances + plan + entries; `balance(_:)`, `balance(_:endOf:)`, `total` (every pot, the card's debt taken off), `entries(in:)` (a month's money-moving entries, newest first)
-Sources/BudgetKit/Money/Ledger+Due.swift  `Due`, `isDone`, `stillToPay(today:)`: done / still to pay, with unpaid items carried over; `split(of:)`: an income's undone items; `upcomingIncomes(today:)`: this month's incomes not yet due
+Sources/BudgetKit/Money/Ledger+Due.swift  `Due`, `isDone`, `stillToPay(today:)`: done / still to pay, with unpaid items carried over; `split(of:)`: an income's undone items; `upcomingIncomes(today:)`: this month's incomes not yet due; `asked(_:)`: paying off the card asks for what is owed
 Sources/BudgetKit/Money/Ledger+Forecast.swift  `nextIncome`, `allowance`, `goalMonth`, `paydays`: what can be spent a day, when the emergency fund is full, which days are paydays
 Sources/BudgetKit/Money/Ledger+MonthLine.swift  `monthLine`: Main at the end of each day from the first-run day, past from entries, the rest projected from the plan
 Sources/BudgetKit/Money/Ledger+MonthNumbers.swift  for Month: the line's `lowest` point, `saved(in:)`, `linePaydays` (arrived and expected incomes on the line), `ordinal` ("19th")
@@ -59,7 +59,8 @@ Sources/BudgetKit/Screens/RootView.swift  the pager (paging ScrollView, arrow ke
                                       the screens; the screens read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
 Sources/BudgetKit/Screens/TodayView.swift  Today: the ring with "YOU CAN SPEND", the amount a day ("a day until the 2 000", "2 000 is late", red below 0)
 Sources/BudgetKit/Screens/TodayRing.swift  the month's days as dots: gone lit, paydays larger (green once come, cyan ahead), today white and largest
-Sources/BudgetKit/Screens/StillToPayList.swift  "Still to pay": click = paid at the planned amount, ⌥-click or Edit = change it first (above 0),
+Sources/BudgetKit/Screens/StillToPayList.swift  "Still to pay": click = paid at the planned amount, ⌥-click or Edit = change it first (above 0; on the card's row
+                                      "Set Owed" opens Set Balance for the card instead),
                                       right-click = Not This Month; "2 000 arrived?" opens the payday sheet; incomes not due yet are listed dimmed at the end ("650 · from the 15th") and open it too; carried-over rows say "· from October"
 Sources/BudgetKit/Screens/PotsView.swift  Pots: "OCTOBER", the total, a tube per pot on one shared scale (the largest goal or amount), the balance above
                                       each, the card as what's owed ("Paid off" at 0), the goal month under Emergency; "2 000 arrived?" while an income is due
@@ -110,6 +111,9 @@ persists; the file is `~/Library/Application Support/Budget/Budget.store`), `Des
   this month, oldest month first, incomes first within a month, then plan order; unpaid items carry over
   to the next month. An income shows once its day (or the start of its window) has come; before that `Ledger.upcomingIncomes(today:)` lists it (shown dimmed, "650 · from the 15th", and it opens the same payday sheet, so an early income can be recorded). `Due.heldBack`
   marks what takes money out of Main and is ready to go: an item planned "with" an income waits only while that income applies this month and has not arrived; with the income paused, limited to another month or gone it is held back at once.
+- **Paying off the card** (a plan item moving money to the card) is asked at what is owed now, not its planned amount
+  (`Ledger.asked`): in still to pay, an income's split, the allowance and the month line. With nothing owed it is not
+  listed, and only its latest month is: what is owed now covers the months before.
 - **Next income** (`Ledger.nextIncome`): the earliest undone income of this month (`.day(d)` is d, a window is
   its last day). If that day has passed it is `late` and counted as today; with none left, next month's first.
 - **Daily allowance** (`Ledger.allowance`) = (Main − every held-back due paid from Main, carried-over months
