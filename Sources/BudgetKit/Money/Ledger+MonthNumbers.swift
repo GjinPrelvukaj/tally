@@ -14,8 +14,9 @@ extension [LinePoint] {
 
 extension Ledger {
     /// What went into Clothes and the Emergency fund during the month. Corrections (`adjustment`) aren't saving.
+    /// Transfers ticked as paid before the first run count: they were saved that month, though they moved no money here.
     public func saved(in month: YearMonth) -> Cents {
-        entries.filter { $0.movesMoney && $0.kind == .transfer && ($0.to == .clothes || $0.to == .emergency)
+        entries.filter { $0.kind == .transfer && ($0.to == .clothes || $0.to == .emergency)
             && YearMonth($0.date, calendar: calendar) == month }
             .reduce(Cents.zero) { $0 + $1.amount }
     }

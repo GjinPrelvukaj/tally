@@ -126,7 +126,7 @@ persists; the file is `~/Library/Application Support/Budget/Budget.store`), `Des
   daily-life amount out every day, an undone income in on its day or on the first projected day if it is late,
   with its undone split out of Main). Later months are empty. See "How the numbers work" in the design.
 - **Month's numbers:** the lowest point is the line's lowest balance, on the first day it is reached; "Saved this month" is the
-  transfers that moved money into Clothes or the Emergency fund, dated in that month (corrections don't count); the line's paydays are
+  transfers that moved money into Clothes or the Emergency fund, dated in that month, those ticked as paid at the first run included (corrections don't count); the line's paydays are
   the incomes that arrived into Main that month, and in this month the undone ones on the day the line expects them.
 
 ## How it is saved
