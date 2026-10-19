@@ -17,24 +17,24 @@ Keep the data path: renaming it would make the app open empty on a Mac that alre
 
 Everything below is built: the money logic (balances, "still to pay" with carry-over, next income, the daily
 allowance, the emergency fund's goal month, the month line), the SwiftData store, a starter plan for the first run,
-the three screens, and the drawers: Quick log, the Plan with its item editor, a payday, Set Balance, the first run.
+the three screens, and the drawers: Quick log, the Plan with its item editor, a payday, Set Balance, the first run,
+a month's entries with their editor.
 Undo takes back the last recorded action. A style kit (`Design/Kit.swift`) holds every size, button and switch.
 
-**Not done yet:** typing a negative balance (an overdrawn account, a card in credit); a list of the month's entries
-to look through, edit or delete; remembering Quick log's last category across launches; categories and pots of
+**Not done yet:** typing a negative balance (an overdrawn account, a card in credit); remembering Quick log's last category across launches; categories and pots of
 your own (they are fixed: Main, Clothes, Emergency fund, Card).
 
 **Not checked by hand yet** (keys and clicks don't reach a demo started from a script): swiping the pager, clicking
-rows, the payday pour, ⌘N / ⌘, / ⌘Z, right-click Set Balance, the plan editor, dragging a drawer down, month paging.
+rows, the payday pour, ⌘N / ⌘, / ⌘Z, right-click Set Balance, the plan editor, the entry editor, dragging a drawer down, month paging.
 
 ## Where things live
 
 ```
-Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, 380 × 560; closing it quits), opens `Store()` or the demo, `--screen` (`payday`, `log`, `plan`: Today with that sheet open; `firstrun`: a demo not yet set up)
+Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, 380 × 560; closing it quits), opens `Store()` or the demo, `--screen` (`payday`, `log`, `plan`, `entries`: Today with that sheet open; `firstrun`: a demo not yet set up)
 Sources/BudgetKit/Money/Cents.swift   money in whole cents: formatting (`formatted`, `wholeEuros` "2 000", `editable` "2 450,17" for a field), parsing, floor division
 Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027")
 Sources/BudgetKit/Money/Model.swift   Pot, Category, Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)`)
-Sources/BudgetKit/Money/Ledger.swift  Ledger: start balances + plan + entries; `balance(_:)`, `balance(_:endOf:)`, `total` (every pot, the card's debt taken off)
+Sources/BudgetKit/Money/Ledger.swift  Ledger: start balances + plan + entries; `balance(_:)`, `balance(_:endOf:)`, `total` (every pot, the card's debt taken off), `entries(in:)` (a month's money-moving entries, newest first)
 Sources/BudgetKit/Money/Ledger+Due.swift  `Due`, `isDone`, `stillToPay(today:)`: done / still to pay, with unpaid items carried over; `split(of:)`: an income's undone items; `upcomingIncomes(today:)`: this month's incomes not yet due
 Sources/BudgetKit/Money/Ledger+Forecast.swift  `nextIncome`, `allowance`, `goalMonth`, `paydays`: what can be spent a day, when the emergency fund is full, which days are paydays
 Sources/BudgetKit/Money/Ledger+MonthLine.swift  `monthLine`: Main at the end of each day from the first-run day, past from entries, the rest projected from the plan
@@ -73,11 +73,15 @@ Sources/BudgetKit/Screens/PaydaySheet.swift  the payday sheet (`PaydayDraft` hol
 Sources/BudgetKit/Screens/MonthView.swift  Month: "MAIN ACCOUNT", "‹ October 2026 ›", one page per month from the start month to this one
                                       (a vertical paging ScrollView, oldest at the top: scrolling up goes back; ⌘← / ⌘→ while Month shows);
                                       each page the lowest point ("lowest point · the 19th" / "today"), the line, and left at end of month,
-                                      saved ("Saved this month" on the current month, "Saved" on past ones), and on the current month only the emergency fund's goal month
+                                      saved ("Saved this month" on the current month, "Saved" on past ones), and on the current month only the emergency fund's goal month; last, "Entries" with their count opens that month's list
 Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's days as faint dots along zero, solid and lit where it happened,
                                       dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out
 Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid)
-Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, five category chips (a tap logs and closes), note, "On Card"; Return logs under the category used last
+Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, "Paid with" Bank Card / Credit Card (`PaidWith`), note, then five category chips
+                                      (`CategoryChips`; a tap logs and closes, so everything else comes above them); Return logs under the category used last
+Sources/BudgetKit/Screens/EntriesSheet.swift  a month's entries (the "Entries" row on Month), newest first; a row opens `EntryEditor`, stacked like Plan's
+Sources/BudgetKit/Screens/EntryEditor.swift  one entry: a spend's amount, how it was paid, note and category; a payment's or income's amount; Delete
+                                      (a paid plan item is due again); a balance set by hand can only be deleted. `EntryDraft.swift` holds its typed values
 Sources/BudgetKit/Screens/PlanSheet.swift  the plan under "Comes in / Goes to savings / Goes out / Every day" (`PlanGroup`); a row opens `PlanItemEditor`
                                       (`PlanItemDraft` holds the typed values); Delete keeps the item's past payments
 Sources/BudgetKit/Screens/PlanItemEditor.swift  the editor for one plan item (opened from the Plan); `PlanItemDraft.swift` holds its typed values
@@ -130,7 +134,8 @@ persists; the file is `~/Library/Application Support/Budget/Budget.store`), `Des
 - `markPaid`, `dismiss` and `payday` do nothing when the item is already done for that month (or the ledger can't be read),
   so a double-click never records twice.
 - Deleting an income, or changing its kind away from income, turns the items planned "with" it into "any day" (`Store.delete` / `save`), so nothing waits for an income that is gone; the editor says how many first. The card is typed as what you owes and kept as a debt (`Pot.figure(for:)` / `balance(fromFigure:)`).
-- **Entries are added; only the last action can be undone.** `Store.undo()` deletes the entries the last recording action wrote (by id, one level; `undoable`, `canUndo`; `recordings` goes up with each action so the screen can offer it). RootView shows an "Undo" pill for 6 s after each action (one delayed hide, nothing runs while idle) and ⌘Z does the same. `setBalance` writes the difference as an `adjustment`; `dismiss` writes a
+- **Entries are added; only the last action can be undone**, and any entry can be changed or deleted from the month's list
+  (`Store.update`, `Store.deleteEntry`; a deleted one also clears Undo when it was part of the last action). `Store.undo()` deletes the entries the last recording action wrote (by id, one level; `undoable`, `canUndo`; `recordings` goes up with each action so the screen can offer it). RootView shows an "Undo" pill for 6 s after each action (one delayed hide, nothing runs while idle) and ⌘Z does the same. `setBalance` writes the difference as an `adjustment`; `dismiss` writes a
   `dismissed` entry that moves no money; deleting a plan item leaves its entries, so balances never change.
 - `setUp` (first run) takes the typed balances plus `paid`, the plan items already paid this month: they are
   recorded as done without moving money. Emergency goal from `Seed.goals` (6 000,00 for the starter plan). It does nothing a second time.

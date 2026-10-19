@@ -1,11 +1,11 @@
 import Combine
 import SwiftUI
 
-/// `--screen payday|log|plan`: the sheet a demo opens on.
-public enum OpenSheet: String, Sendable { case payday, log, plan }
+/// `--screen payday|log|plan|entries`: the sheet a demo opens on.
+public enum OpenSheet: String, Sendable { case payday, log, plan, entries }
 
 /// The sheets that rise over the screens, apart from the payday one (which needs an income).
-enum Sheet: Hashable { case log, plan, balance(Pot) }
+enum Sheet: Hashable { case log, plan, balance(Pot), entries(YearMonth) }
 
 /// The window's content: the three screens side by side, one swipe or arrow key apart,
 /// with dots under them saying where you are. Before the first run, the first run instead.
@@ -19,7 +19,7 @@ public struct RootView: View {
     @State private var day: Date
     /// The income whose payday sheet is open, over every screen.
     @State private var payday: Due?
-    /// The quick log, plan or set-balance sheet, when one is open.
+    /// The quick log, plan, set-balance or entries sheet, when one is open.
     @State private var sheet: Sheet?
     /// The category Return logs under in the quick log: the one used last.
     @State private var lastCategory = Category.food
@@ -37,7 +37,13 @@ public struct RootView: View {
         _position = State(initialValue: PagerPosition(Double(screen.rawValue)))
         _day = State(initialValue: today())
         _payday = State(initialValue: sheet == .payday ? store.ledger().stillToPay(today: today()).first(where: \.isIncome) : nil)
-        _sheet = State(initialValue: sheet == .log ? .log : sheet == .plan ? .plan : nil)
+        let opened: Sheet? = switch sheet {
+        case .log: .log
+        case .plan: .plan
+        case .entries: .entries(YearMonth(today(), calendar: store.ledger().calendar))
+        case .payday, nil: nil
+        }
+        _sheet = State(initialValue: opened)
     }
 
     /// A sheet is open: the screens behind it take no keys and no clicks.
@@ -71,7 +77,7 @@ public struct RootView: View {
                     TodayView(store: store, today: day, now: today, onPayday: open)
                         .containerRelativeFrame(.horizontal).id(Screen.today)
                     PotsView(store: store, today: day, onPayday: open, onSetBalance: { show(.balance($0)) }).containerRelativeFrame(.horizontal).id(Screen.pots)
-                    MonthView(store: store, today: day).containerRelativeFrame(.horizontal).id(Screen.month)
+                    MonthView(store: store, today: day, onEntries: { show(.entries($0)) }).containerRelativeFrame(.horizontal).id(Screen.month)
                 }
                 .scrollTargetLayout()
             }
@@ -159,6 +165,8 @@ public struct RootView: View {
         case .balance(let pot):
             SetBalanceSheet(pot: pot, balance: store.ledger().balance(pot),
                             set: { store.setBalance(pot, to: $0, at: today()); close() }, cancel: close)
+        case .entries(let month):
+            EntriesSheet(store: store, month: month, close: close)
         }
     }
 

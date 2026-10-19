@@ -6,6 +6,8 @@ import SwiftUI
 struct MonthView: View {
     let store: Store
     let today: Date
+    /// Opens the list of a month's entries.
+    let onEntries: (YearMonth) -> Void
     @State private var scroll = ScrollPosition(idType: YearMonth.self)
     /// Whether Month is the page in view, so ⌘← / ⌘→ never turn its months unseen.
     @State private var onScreen = false
@@ -30,7 +32,7 @@ struct MonthView: View {
             ScrollView(.vertical) {
                 LazyVStack(spacing: 0) {
                     ForEach(months, id: \.self) { month in
-                        MonthPage(ledger: ledger, month: month, today: today, goal: store.goal(.emergency))
+                        MonthPage(ledger: ledger, month: month, today: today, goal: store.goal(.emergency)) { onEntries(month) }
                             .containerRelativeFrame(.vertical)
                             .id(month)
                     }
@@ -87,6 +89,7 @@ private struct MonthPage: View {
     let month: YearMonth
     let today: Date
     let goal: Cents?
+    let onEntries: () -> Void
 
     var body: some View {
         let calendar = ledger.calendar
@@ -104,6 +107,11 @@ private struct MonthPage: View {
                 if todayDay != nil, let goal, let reached = ledger.goalMonth(.emergency, goal: goal, today: today) {
                     row("Emergency fund", reached.shortName)
                 }
+                Button(action: onEntries) {
+                    row("Entries", "\(ledger.entries(in: month).count) ›").contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .hoverLift()
             }
             .padding(.top, 8)
             .padding(.bottom, 4)

@@ -28,6 +28,11 @@ public struct Ledger: Sendable {
         Pot.allCases.reduce(.zero) { $0 + balance($1) }
     }
 
+    /// What moved money in the month, newest first: the list to look through, edit or delete.
+    public func entries(in month: YearMonth) -> [Entry] {
+        entries.filter { $0.movesMoney && YearMonth($0.date, calendar: calendar) == month }.sorted { $0.date > $1.date }
+    }
+
     /// The balance as it stood when the given day ended.
     public func balance(_ pot: Pot, endOf day: Date) -> Cents {
         let nextMorning = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: day))!
