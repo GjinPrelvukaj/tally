@@ -32,7 +32,7 @@ struct QuickLogSheet: View {
             AmountField(label: "Spent", text: $amount, valid: amount.isEmpty || cents != nil, autofocus: true)
             // Above the categories: a tap on one logs at once, so how it was paid and the note come first.
             PaidWith(onCard: $onCard)
-            GlassField(label: "Note", text: $note, align: .leading, hint: "Note (optional)")
+            GlassField(label: "Note", text: $note, align: .leading, hint: "Note (optional)", secret: false)
             CategoryChips(chosen: last, tap: save)
                 .disabled(cents == nil)
                 .opacity(cents == nil ? 0.45 : 1)

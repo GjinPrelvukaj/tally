@@ -30,7 +30,16 @@ struct GlassField: View {
     var hint = "0,00"
     /// Focused when the sheet opens, so typing can start at once.
     var autofocus = false
+    /// An amount: while amounts are hidden it shows a bar until it is clicked into. A name or a note is not one.
+    var secret = true
     @FocusState private var focused: Bool
+    @Environment(\.redactionReasons) private var redaction
+    /// Clicked or typed into: it shows what it holds, as typing over a bar can't be right. Focus alone isn't
+    /// enough, as the Mac focuses a drawer's first field by itself.
+    @State private var revealed = false
+
+    private var hiding: Bool { secret && redaction.contains(.privacy) }
+    private var masked: Bool { hiding && !revealed && !text.isEmpty }
 
     var body: some View {
         TextField("", text: $text)
@@ -38,10 +47,14 @@ struct GlassField: View {
             .textFieldStyle(.plain)
             .multilineTextAlignment(align)
             .monospacedDigit()
-            .foregroundStyle(valid ? Color.white : .red)
+            .foregroundStyle(masked ? Color.clear : valid ? Color.white : .red)
             // Drawn here, faint: a TextField's own prompt shows almost as bright as typed text.
             .overlay(alignment: align == .leading ? .leading : .trailing) {
-                if text.isEmpty {
+                if masked {
+                    // One bar the same width whatever the amount.
+                    Text("0 000,00").font(large ? Kit.amount : Kit.body).monospacedDigit()
+                        .redacted(reason: .placeholder).allowsHitTesting(false)
+                } else if text.isEmpty {
                     Text(hint).font(large ? Kit.amount : Kit.body).monospacedDigit().opacity(0.22).allowsHitTesting(false)
                 }
             }
@@ -51,7 +64,10 @@ struct GlassField: View {
             .background(.white.opacity(focused ? 0.12 : 0.06),
                         in: RoundedRectangle(cornerRadius: large ? 10 : 8, style: .continuous))
             .focused($focused)
-            .onAppear { focused = autofocus }
+            .simultaneousGesture(TapGesture().onEnded { revealed = true })
+            .onChange(of: text) { revealed = true }
+            // Hidden, it waits to be clicked into rather than showing its amount as the sheet opens.
+            .onAppear { focused = autofocus && !hiding }
             .accessibilityLabel(label)
     }
 }

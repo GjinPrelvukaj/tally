@@ -19,7 +19,7 @@ struct EntriesPane: View {
         HStack(spacing: 0) {
             list(ledger, month: month, thisMonth: thisMonth).pane()
             if let editing {
-                SidePanel {
+                SidePanel(close: closeEditor) {
                     EntryEditor(draft: Binding { self.editing ?? editing } set: { self.editing = $0 },
                                 title: editing.original.title(plan: ledger.plan),
                                 save: { store.update($0); closeEditor() },

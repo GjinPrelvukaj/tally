@@ -28,7 +28,8 @@ your own (they are fixed: Main, Clothes, Emergency fund, Card).
 **Not checked by hand yet** (keys and clicks don't reach a demo started from a script): clicking the sidebar,
 rows, the payday pour, ⌘N / ⌘1–⌘5 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, the plan and entry editors (their pop-ups), dragging a drawer down,
 month paging, resizing the window and it keeping its size, clicking a big number or the eye to hide amounts, the Touch ID lock
-(the demo never locks) and turning it on in Settings.
+(the demo never locks) and turning it on in Settings, two-finger swipes closing a drawer (down) or an editor panel (right),
+clicking into a hidden amount field to show it.
 
 ## Where things live
 
@@ -53,10 +54,13 @@ Sources/BudgetKit/Store/Demo.swift    `Store.demo(afterPayday:paydayDue:setUp:ca
 Sources/BudgetKit/Design/Kit.swift     the app's own sizes, one spacing scale (Kit.Space), buttons (.primary/.secondary/.quiet), chips, glass switch, eyebrow/group labels; the three input widths (`Kit.field` 170 for
                                       every control in a form, `Kit.rowAmount` 96 for an amount in a list's row, `Kit.largeField` 160 for a drawer's big amount)
 Sources/BudgetKit/Screens/SheetCard.swift  sheet glass (sheetCard), GlassField, AmountField (label + field + €), SheetFooter (Cancel + action)
-Sources/BudgetKit/Screens/Drawer.swift     Quick log, payday and Set Balance are drawers (.drawer(close:)): over the pane, at most 440 wide, a handle, dragged down (>90 pt or a flick) or a click on the dim round it closes it
+Sources/BudgetKit/Screens/Drawer.swift     Quick log, payday and Set Balance are drawers (.drawer(close:)): over the pane, at most 440 wide, a handle, dragged down (>90 pt or a flick), two fingers down on the trackpad, or a click on the dim round it closes it
 Scripts/make-icon.swift / make-icon.sh  draw the app icon (ring of days on black glass) into Resources/AppIcon.icns, which is committed
 Sources/BudgetKit/Design/Living.swift  copied from Brimlight: Living, Motion, EdgeLight, GlowMeter, DayLine, LiquidDayLine, DotRing, PillButtonStyle, HoverLift, RollingDigits
 Sources/BudgetKit/Design/Spring.swift  copied from Brimlight: the damped spring
+Sources/BudgetKit/Design/Swipe.swift  `.swipeToClose(.down|.right, pull:ended:)`: two fingers on the trackpad (a local scroll-event monitor; not a mouse wheel,
+                                      not momentum) pull a drawer down or a `SidePanel` right, following them; `SwipeDirection.travel` reads the
+                                      fingers' way whatever the scroll setting, and ignores a move mostly the other way
 Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours and `tint`, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
 Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `WindowSize`
 Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's pane, the drawers over the pane (the sidebar takes no clicks while one is open),
@@ -92,7 +96,8 @@ Sources/BudgetKit/Screens/MonthView.swift  Month: "MAIN ACCOUNT", "‹ October 2
                                       saved ("Saved this month" on the current month, "Saved" on past ones), and on the current month only the emergency fund's goal month
 Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's days as faint dots along zero, solid and lit where it happened,
                                       dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out
-Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid)
+Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid);
+                                      while amounts are hidden an amount field shows a bar until clicked or typed into (`secret: false` for a name or note)
 Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, "Paid with" Bank Card / Credit Card (`PaidWith`), note, then five category chips
                                       (`CategoryChips`; a tap logs and closes, so everything else comes above them); Return logs under the category used last
 Sources/BudgetKit/Screens/EntriesPane.swift  Entries: a month's entries newest first, "‹ October 2026 ›" back to the first month; a row opens `EntryEditor`

@@ -24,7 +24,7 @@ struct EntryEditor: View {
             }
             if draft.isSpend {
                 PaidWith(onCard: $draft.onCard)
-                GlassField(label: "Note", text: $draft.note, align: .leading, hint: "Note (optional)")
+                GlassField(label: "Note", text: $draft.note, align: .leading, hint: "Note (optional)", secret: false)
                 CategoryChips(chosen: draft.category) { draft.category = $0 }
             }
             Spacer(minLength: 0)
