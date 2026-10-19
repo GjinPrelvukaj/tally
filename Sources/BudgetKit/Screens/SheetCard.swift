@@ -33,12 +33,12 @@ struct GlassField: View {
     /// An amount: while amounts are hidden it shows a bar until it is clicked into. A name or a note is not one.
     var secret = true
     @FocusState private var focused: Bool
-    @Environment(\.redactionReasons) private var redaction
+    @Environment(\.amountsHidden) private var amountsHidden
     /// Clicked or typed into: it shows what it holds, as typing over a bar can't be right. Focus alone isn't
     /// enough, as the Mac focuses a card's first field by itself.
     @State private var revealed = false
 
-    private var hiding: Bool { secret && redaction.contains(.privacy) }
+    private var hiding: Bool { secret && amountsHidden }
     private var masked: Bool { hiding && !revealed && !text.isEmpty }
 
     var body: some View {
@@ -53,7 +53,7 @@ struct GlassField: View {
                 if masked {
                     // One bar the same width whatever the amount.
                     Text("0 000,00").font(large ? Kit.amount : Kit.body).monospacedDigit()
-                        .redacted(reason: .placeholder).allowsHitTesting(false)
+                        .privateAmount().allowsHitTesting(false)
                 } else if text.isEmpty {
                     Text(hint).font(large ? Kit.amount : Kit.body).monospacedDigit().opacity(0.22).allowsHitTesting(false)
                 }

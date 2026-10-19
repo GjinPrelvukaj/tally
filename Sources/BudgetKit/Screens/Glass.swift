@@ -8,6 +8,9 @@ struct Glass: View {
     let light: [[Color]]
     let position: Double
 
+    /// How far up from the bottom edge its light reaches (its 22 pt and its blur): content stays above it.
+    static let lightRoom: CGFloat = 48
+
     private let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
 
     var body: some View {

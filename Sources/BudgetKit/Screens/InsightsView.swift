@@ -37,7 +37,7 @@ struct InsightsView: View {
     private func summaryCard(_ headline: String) -> some View {
         VStack(alignment: .leading, spacing: Kit.Space.label) {
             Label("In short", systemImage: "sparkles").font(Living.caption).opacity(0.55)
-            Text(headline).font(Kit.body).fixedSize(horizontal: false, vertical: true).privacySensitive()
+            Text(headline).font(Kit.body).fixedSize(horizontal: false, vertical: true).privateAmount()
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -59,7 +59,7 @@ private struct InsightCard: View {
                 Text(insight.detail).font(Kit.quiet).opacity(0.55).fixedSize(horizontal: false, vertical: true)
             }
             // Titles and lines carry amounts: they hide with the rest.
-            .privacySensitive()
+            .privateAmount()
             Spacer(minLength: 0)
         }
         .padding(14)

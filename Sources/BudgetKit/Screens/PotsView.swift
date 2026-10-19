@@ -50,7 +50,7 @@ struct PotsView: View {
         Button { onPayday(income) } label: {
             HStack(spacing: 6) {
                 Circle().fill(Color.arrived).frame(width: 6, height: 6).shadow(color: .arrived.opacity(0.7), radius: 2.5)
-                Text("\(income.item.amount.wholeEuros) arrived?").privacySensitive()
+                Text("\(income.item.amount.wholeEuros) arrived?").privateAmount()
             }
             .font(.system(size: 12))
         }
@@ -69,7 +69,7 @@ struct PotsView: View {
                 let paidOff = pot == .card && balance == .zero
                 VStack(spacing: 8) {
                     Text(paidOff ? "Paid off" : balance.formatted)
-                        .privacySensitive(!paidOff)
+                        .privateAmount(!paidOff)
                         .font(.system(size: 12)).monospacedDigit()
                         .lineLimit(1).minimumScaleFactor(0.6)
                         .opacity(paidOff ? 0.45 : 0.88)

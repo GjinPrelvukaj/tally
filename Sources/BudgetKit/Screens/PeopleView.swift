@@ -69,7 +69,7 @@ struct PeopleView: View {
                 if owes != .zero {
                     Text(Cents(abs(owes.value)).formatted).font(Kit.body.weight(.medium)).monospacedDigit()
                         .foregroundStyle(owes > .zero ? Color.arrived : .hex(0xFBBF24))
-                        .privacySensitive()
+                        .privateAmount()
                 }
             }
             .padding(.horizontal, 14)

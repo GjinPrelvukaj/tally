@@ -73,7 +73,7 @@ private struct DueRow: View {
             let title = early ? "\(due.item.amount.wholeEuros) · from the \(ordinal(due.arrivesFrom ?? 1))"
                 : due.isIncome ? "\(due.item.amount.wholeEuros) arrived?" : due.item.name
             let month = Text(from.map { " · from \($0.name)" } ?? "").foregroundStyle(.white.opacity(0.4))
-            Text("\(title)\(month)").lineLimit(1).privacySensitive(due.isIncome)
+            Text("\(title)\(month)").lineLimit(1).privateAmount(due.isIncome)
             Spacer(minLength: 8)
             if typed != nil {
                 editor
@@ -89,7 +89,7 @@ private struct DueRow: View {
                     Button(paysOffCard ? "Set Owed" : "Edit", action: paysOffCard ? setOwed : edit)
                         .buttonStyle(.plain).font(Kit.quiet).opacity(0.55).transition(.opacity)
                 }
-                Text(due.item.amount.formatted).monospacedDigit().privacySensitive()
+                Text(due.item.amount.formatted).monospacedDigit().privateAmount()
             }
         }
         .font(Kit.body)

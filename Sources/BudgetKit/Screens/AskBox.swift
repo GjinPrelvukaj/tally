@@ -60,8 +60,8 @@ struct AskBox: View {
     private func answer(_ answer: Answer) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(answer.understood).font(Living.caption).opacity(0.45)
-            Text(answer.title).font(Kit.body.weight(.medium)).privacySensitive()
-            ForEach(answer.lines, id: \.self) { Text($0).font(Kit.quiet).opacity(0.6).privacySensitive() }
+            Text(answer.title).font(Kit.body.weight(.medium)).privateAmount()
+            ForEach(answer.lines, id: \.self) { Text($0).font(Kit.quiet).opacity(0.6).privateAmount() }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -77,7 +77,7 @@ public struct RootView: View {
                     .accessibilityHidden(modal)
                     modals
                 }
-                .redacted(reason: amountsHidden ? .privacy : [])
+                .environment(\.amountsHidden, amountsHidden)
                 .environment(\.toggleAmounts, toggleAmounts)
                 .environment(\.partnerName, partnerName)
             } else {
@@ -102,15 +102,19 @@ public struct RootView: View {
         }
     }
 
+    /// Every section, and what shows over it, ends above the light along the bottom edge (`Glass.lightRoom`):
+    /// nothing touches it; a list scrolls within.
     private var pane: some View {
         VStack(spacing: 0) {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            if let problem { Text(problem).font(Living.caption).opacity(0.5).padding(.bottom, 10) }
+                .clipped()
+            if let problem { Text(problem).font(Living.caption).opacity(0.5).padding(.top, 6) }
         }
+        .padding(.bottom, Glass.lightRoom)
         .overlay(alignment: .bottom) {
             if undoShown && !modal {
-                UndoPill(undo: undo).padding(.bottom, Kit.Space.edge).transition(.opacity)
+                UndoPill(undo: undo).padding(.bottom, Glass.lightRoom).transition(.opacity)
             }
         }
     }
@@ -166,7 +170,8 @@ public struct RootView: View {
             }
             // As wide as a phone, not the window: its rows stay close to their amounts.
             .frame(maxWidth: 440)
-            .padding(.vertical, 24)
+            // Clear of the window's light at the bottom, like everything else.
+            .padding(.vertical, Glass.lightRoom)
             // The card and everything in it move as one piece, so nothing inside arrives before it.
             .geometryGroup()
             .transition(reduceMotion ? .opacity : .scale(scale: 0.96).combined(with: .opacity))
