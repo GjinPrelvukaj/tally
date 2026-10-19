@@ -24,7 +24,7 @@ struct InsightsView: View {
                     }
                     ForEach(insights) { InsightCard(insight: $0) }
                 }
-                .frame(maxWidth: 600, alignment: .leading)
+                .frame(maxWidth: Kit.readable, alignment: .leading)
                 .padding(.horizontal, 40)
                 .padding(.top, 36)
                 .padding(.bottom, Kit.Space.edge)

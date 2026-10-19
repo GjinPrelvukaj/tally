@@ -81,7 +81,7 @@ public struct RootView: View {
                 .environment(\.toggleAmounts, toggleAmounts)
                 .environment(\.partnerName, partnerName)
             } else {
-                FirstRunView(store: store, today: today()).frame(width: 380, height: 520)
+                FirstRunView(store: store, today: today()) { name in if real { savedPartner = name } }
             }
         }
         // Opens at the standard size; never smaller than the minimum.

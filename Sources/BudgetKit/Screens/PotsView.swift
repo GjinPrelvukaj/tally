@@ -26,9 +26,9 @@ struct PotsView: View {
                 Spacer(minLength: 8)
                 if let income { arrived(income) }
             }
-            // Not the pane's full height and width: four tall slabs would read as walls, not tubes.
+            // They grow with the window, but not past tall and slim: four wide slabs would read as walls, not tubes.
             tubes(ledger)
-                .frame(maxWidth: 560, maxHeight: 360)
+                .frame(maxWidth: 640, maxHeight: 520)
                 .padding(.top, 26)
         }
         .pane()

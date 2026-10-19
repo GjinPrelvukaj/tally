@@ -44,7 +44,7 @@ struct PeopleView: View {
                 SettingsCard { ForEach(settled, id: \.self) { row($0, ledger) } }.opacity(0.6)
             }
         }
-        .frame(maxWidth: 560, alignment: .leading)
+        .frame(maxWidth: Kit.readable, alignment: .leading)
         .pane()
         .frame(maxWidth: .infinity, alignment: .top)
     }

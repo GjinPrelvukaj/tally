@@ -13,6 +13,8 @@ enum Kit {
     static let amount = Font.system(size: 20, weight: .semibold)
     /// Every button and chip is this tall, so a row of them lines up.
     static let control: CGFloat = 28
+    /// The widest a section's content gets: a list's name and amount stay close however wide the window.
+    static let readable: CGFloat = 820
 
     /// The three widths a field or pop-up comes in, so none is a third of the one beside it.
     /// Every control in a form (a field, an amount with its "€", a pop-up): their right edges line up.
@@ -145,12 +147,14 @@ extension ToggleStyle where Self == GlassSwitchStyle {
 }
 
 extension View {
-    /// A section's content in the pane right of the sidebar: the same room round every one. The pane itself
-    /// already ends above the window's light, so no room is added at the bottom.
+    /// A section's content in the pane right of the sidebar: the same room round every one, no wider than
+    /// `Kit.readable` and centred in a wide window, so rows never stretch apart. The pane itself already ends above
+    /// the window's light, so no room is added at the bottom.
     func pane() -> some View {
-        padding(.horizontal, 40)
+        frame(maxWidth: Kit.readable, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.horizontal, 40)
             .padding(.top, 36)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     /// A list's rows on one quiet rounded panel (the plan's groups, the month's entries).

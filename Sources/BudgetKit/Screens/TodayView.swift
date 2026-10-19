@@ -24,19 +24,33 @@ struct TodayView: View {
         }
     }
 
-    /// The date, then the ring on the left and what's still to pay and spent today beside it, kept together in the middle.
+    /// The date, then the ring on the left and what's still to pay and spent today beside it, the cards under them,
+    /// kept together in the middle. They grow with the window (`TodayLayout`), from the smallest window to a big one.
     private func screen(_ ledger: Ledger, month: YearMonth) -> some View {
+        GeometryReader { geo in
+            // A third of the room left above, two thirds below; with no room left it starts at the top.
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                content(ledger, month: month, layout: TodayLayout(width: geo.size.width - 80, height: geo.size.height - 36))
+                Spacer(minLength: 0)
+                Spacer(minLength: 0)
+            }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+        }
+    }
+
+    private func content(_ ledger: Ledger, month: YearMonth, layout: TodayLayout) -> some View {
         let calendar = ledger.calendar
         let spent = ledger.entries(in: month).filter { $0.kind == .spend && calendar.isDate($0.date, inSameDayAs: today) }
         return VStack(alignment: .leading, spacing: 0) {
             Text(dayTitle(today, calendar: calendar)).eyebrow()
-            HStack(alignment: .top, spacing: 36) {
+            HStack(alignment: .top, spacing: TodayLayout.gap) {
                 ZStack {
                     TodayRing(days: month.days(calendar: calendar), today: calendar.component(.day, from: today),
                               paydays: ledger.paydays(today: today))
-                    AllowanceText(allowance: ledger.allowance(today: today))
+                    AllowanceText(allowance: ledger.allowance(today: today), scale: layout.scale)
                 }
-                .frame(width: 240, height: 240)
+                .frame(width: layout.ring, height: layout.ring)
                 VStack(alignment: .leading, spacing: 28) {
                     StillToPayList(dues: ledger.stillToPay(today: today), upcoming: ledger.upcomingIncomes(today: today),
                                    thisMonth: month, store: store, now: now, onPayday: onPayday, onSetOwed: onSetOwed)
@@ -45,18 +59,15 @@ struct TodayView: View {
                         PartnerOwes(name: partnerName, owes: ledger.partnerOwes, paidBack: onPaidBack)
                     }
                 }
-                .frame(width: 300, alignment: .topLeading)
+                .frame(width: layout.column, alignment: .topLeading)
             }
-            .padding(.top, 28)
-            // As wide as the ring and the lists above (240 + 36 + 300).
+            .padding(.top, 28 * layout.scale)
+            // As wide as the ring and the lists above.
             TodayCards(ledger: ledger, today: today)
-                .frame(width: 576)
-                .padding(.top, 32)
+                .frame(width: layout.width)
+                .padding(.top, 32 * layout.scale)
         }
-        .fixedSize(horizontal: true, vertical: false)
-        .padding(.top, 36)
-        .padding(.horizontal, 40)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.top, 36 * layout.scale)
     }
 }
 
@@ -109,6 +120,8 @@ private struct PartnerOwes: View {
 /// The ring's centre: "YOU CAN SPEND", the amount a day, and what it lasts until.
 private struct AllowanceText: View {
     let allowance: Allowance?
+    /// Grows with the ring.
+    var scale: CGFloat = 1
 
     var body: some View {
         if let allowance {
@@ -129,13 +142,31 @@ private struct AllowanceText: View {
 
     /// Rolls when it changes; an amount too wide to roll at full size shrinks instead.
     private func amount(_ perDay: Cents) -> some View {
-        let font = Font.system(size: 40, weight: .semibold)
+        let font = Font.system(size: 40 * scale, weight: .semibold)
         return ViewThatFits(in: .horizontal) {
             RollingDigits(text: perDay.formatted, font: font)
             Text(perDay.formatted).font(font).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
         }
-        .frame(maxWidth: 184)
+        .frame(maxWidth: 184 * scale)
         .foregroundStyle(perDay < .zero ? Color.red : .white)
         .bigAmount()
     }
+}
+
+/// How big Today is drawn for the space it has: the ring and the column beside it grow together with the window,
+/// from the smallest window (a ring of 240) to a ring of 380 in a big one, the cards as wide as both.
+struct TodayLayout {
+    static let gap: CGFloat = 36
+    let ring: CGFloat
+    let column: CGFloat
+
+    init(width: CGFloat, height: CGFloat) {
+        // The ring takes about two fifths of the width and half the height, whichever is less.
+        ring = min(380, max(240, min(width * 0.4, (height - 220) * 0.55)))
+        column = min(460, max(300, width - ring - Self.gap))
+    }
+
+    var width: CGFloat { ring + Self.gap + column }
+    /// The ring's size against the smallest one, for the type and gaps that grow with it.
+    var scale: CGFloat { ring / 240 }
 }

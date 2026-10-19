@@ -22,7 +22,7 @@ struct SettingsView: View {
                 case .partner: PartnerSettings()
                 }
             }
-            .frame(maxWidth: 560, alignment: .leading)
+            .frame(maxWidth: Kit.readable, alignment: .leading)
             .padding(.horizontal, 40)
             .padding(.top, 36)
             .padding(.bottom, Kit.Space.edge)
