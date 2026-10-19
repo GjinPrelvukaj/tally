@@ -3,6 +3,8 @@ import SwiftUI
 
 /// What is still waiting this month, and anything carried over. A click marks one paid at its planned amount;
 /// ⌥-click or Edit changes the amount first; right-click says "Not This Month". An income asks if it arrived.
+/// Paying off the card is asked at what is owed; its row says "Set Owed" instead of Edit, as a payment typed there
+/// was taken for a correction of what is owed.
 struct StillToPayList: View {
     let dues: [Due]
     /// This month's incomes that are not due yet, dimmed at the end; one that arrives early can still be recorded.
@@ -11,6 +13,7 @@ struct StillToPayList: View {
     let store: Store
     let now: () -> Date
     let onPayday: (Due) -> Void
+    let onSetOwed: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -33,12 +36,12 @@ struct StillToPayList: View {
                 DueRow(due: due, from: due.month < thisMonth ? due.month : nil,
                        pay: { amount in change { store.markPaid(due, amount: amount, at: now()) } },
                        dismiss: { change { store.dismiss(due, at: now()) } },
-                       payday: { onPayday(due) })
+                       payday: { onPayday(due) }, setOwed: onSetOwed)
                     .transition(reduceMotion ? .opacity : .asymmetric(insertion: .opacity,
                                                                      removal: .move(edge: .trailing).combined(with: .opacity)))
             }
             ForEach(upcoming) { due in
-                DueRow(due: due, from: nil, early: true, pay: { _ in }, dismiss: {}, payday: { onPayday(due) })
+                DueRow(due: due, from: nil, early: true, pay: { _ in }, dismiss: {}, payday: { onPayday(due) }, setOwed: {})
             }
         }
     }
@@ -59,6 +62,7 @@ private struct DueRow: View {
     let pay: (Cents) -> Void
     let dismiss: () -> Void
     let payday: () -> Void
+    let setOwed: () -> Void
     @State private var hovering = false
     /// The amount being typed, while the row is being edited.
     @State private var typed: String?
@@ -83,7 +87,8 @@ private struct DueRow: View {
                     .background(Color.arrived.opacity(0.3), in: Capsule())
             } else {
                 if hovering {
-                    Button("Edit", action: edit).buttonStyle(.plain).font(Kit.quiet).opacity(0.55).transition(.opacity)
+                    Button(paysOffCard ? "Set Owed" : "Edit", action: paysOffCard ? setOwed : edit)
+                        .buttonStyle(.plain).font(Kit.quiet).opacity(0.55).transition(.opacity)
                 }
                 Text(due.item.amount.formatted).monospacedDigit()
             }
@@ -121,6 +126,8 @@ private struct DueRow: View {
         }
         .onAppear { fieldFocused = true }
     }
+
+    private var paysOffCard: Bool { due.item.to == .card }
 
     private func tap() {
         guard typed == nil else { return }

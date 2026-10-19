@@ -62,6 +62,7 @@ extension Ledger {
     /// What the income's own undone items take out of Main when it arrives.
     private func splitOut(of income: PlanItem, in month: YearMonth) -> Cents {
         plan.filter { $0.schedule == .withIncome(income.id) && $0.from == .main && $0.applies(in: month) && !isDone($0.id, in: month) }
+            .compactMap(asked)
             .reduce(Cents.zero) { $0 + $1.amount }
     }
 }

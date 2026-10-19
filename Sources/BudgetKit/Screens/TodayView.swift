@@ -7,6 +7,8 @@ struct TodayView: View {
     /// When an action is recorded: the real time, or the demo's pinned one.
     let now: () -> Date
     let onPayday: (Due) -> Void
+    /// Asks what is owed on the card (Set Balance), from the card's own row.
+    let onSetOwed: () -> Void
 
     var body: some View {
         let ledger = store.ledger()
@@ -29,7 +31,7 @@ struct TodayView: View {
             }
             .frame(width: 240, height: 240)
             .padding(.top, 18)
-            StillToPayList(dues: ledger.stillToPay(today: today), upcoming: ledger.upcomingIncomes(today: today), thisMonth: month, store: store, now: now, onPayday: onPayday)
+            StillToPayList(dues: ledger.stillToPay(today: today), upcoming: ledger.upcomingIncomes(today: today), thisMonth: month, store: store, now: now, onPayday: onPayday, onSetOwed: onSetOwed)
                 .padding(.top, 26)
                 .padding(.horizontal, 30)
                 .frame(maxHeight: .infinity, alignment: .top)

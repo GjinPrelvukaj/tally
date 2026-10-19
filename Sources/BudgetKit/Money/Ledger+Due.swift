@@ -28,6 +28,18 @@ extension Ledger {
     /// What is paid out of an income when it arrives: that month's items planned "with" it, not yet done, in plan order.
     public func split(of income: Due) -> [PlanItem] {
         plan.filter { $0.schedule == .withIncome(income.item.id) && $0.applies(in: income.month) && !isDone($0.id, in: income.month) }
+            .compactMap(asked)
+    }
+
+    /// The item as it is asked for now. Paying off the card asks for what is owed, whatever the plan once said;
+    /// with nothing owed there is nothing to pay.
+    func asked(_ item: PlanItem) -> PlanItem? {
+        guard item.to == .card else { return item }
+        let owed = Pot.card.figure(for: balance(.card))
+        guard owed > .zero else { return nil }
+        var item = item
+        item.amount = owed
+        return item
     }
 
     /// The items planned "with" this income: what an income's delete or change of kind would leave without one.
@@ -43,6 +55,9 @@ extension Ledger {
         var month = startMonth
         while month <= thisMonth {
             let open = plan.filter { $0.kind != .daily && $0.applies(in: month) && !isDone($0.id, in: month) }
+                // What is owed now covers the card's earlier months: it is asked for once, in its latest month.
+                .filter { $0.to != .card || !appliesLater($0, after: month, upTo: thisMonth) }
+                .compactMap(asked)
             let incomes = open.filter { $0.kind == .income && hasArrived($0, in: month, thisMonth: thisMonth, today: today) }
             let rest = open.filter { $0.kind != .income }
             result += (incomes + rest).map { Due(item: $0, month: month, heldBack: isHeldBack($0, in: month), isIncome: $0.kind == .income) }
@@ -68,6 +83,10 @@ extension Ledger {
         case .anyDay, .withIncome:
             return true
         }
+    }
+
+    private func appliesLater(_ item: PlanItem, after month: YearMonth, upTo thisMonth: YearMonth) -> Bool {
+        sequence(first: month.next) { $0.next }.prefix { $0 <= thisMonth }.contains { item.applies(in: $0) }
     }
 
     private func isHeldBack(_ item: PlanItem, in month: YearMonth) -> Bool {

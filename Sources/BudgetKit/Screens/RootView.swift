@@ -74,7 +74,7 @@ public struct RootView: View {
         VStack(spacing: 0) {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
-                    TodayView(store: store, today: day, now: today, onPayday: open)
+                    TodayView(store: store, today: day, now: today, onPayday: open, onSetOwed: { show(.balance(.card)) })
                         .containerRelativeFrame(.horizontal).id(Screen.today)
                     PotsView(store: store, today: day, onPayday: open, onSetBalance: { show(.balance($0)) }).containerRelativeFrame(.horizontal).id(Screen.pots)
                     MonthView(store: store, today: day, onEntries: { show(.entries($0)) }).containerRelativeFrame(.horizontal).id(Screen.month)
