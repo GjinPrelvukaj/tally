@@ -140,7 +140,7 @@ Sources/BudgetKit/Screens/MonthView.swift  Month: "MAIN ACCOUNT", "‹ October 2
                                       each page the lowest point ("lowest point · the 19th" / "today"), the line, and left at end of month,
                                       saved ("Saved this month" on the current month, "Saved" on past ones), and on the current month only the emergency fund's goal month
 Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's days as faint dots along zero, solid and lit where it happened,
-                                      dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out
+                                      dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out (none before the line starts)
 Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid);
                                       while amounts are hidden an amount field shows a bar until clicked or typed into (`secret: false` for a name or note)
 Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, the category chips (three a row, retired ones left out; a tap only chooses, the one used last to begin with), Bank Card /
