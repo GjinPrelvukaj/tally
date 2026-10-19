@@ -42,6 +42,10 @@ struct TodayView: View {
                 .frame(width: 300, alignment: .topLeading)
             }
             .padding(.top, 28)
+            // As wide as the ring and the lists above (240 + 36 + 300).
+            TodayCards(ledger: ledger, today: today)
+                .frame(width: 576)
+                .padding(.top, 32)
         }
         .fixedSize(horizontal: true, vertical: false)
         .padding(.top, 36)
@@ -65,7 +69,7 @@ private struct SpentToday: View {
                     Text(entry.note ?? entry.category?.title ?? "").lineLimit(1)
                     if entry.from == .card { Text("Card").font(Kit.quiet).opacity(0.4) }
                     Spacer(minLength: 8)
-                    Text(entry.amount.formatted).monospacedDigit()
+                    Text(entry.amount.formatted).monospacedDigit().privacySensitive()
                 }
                 .font(Kit.body)
                 .opacity(0.88)
@@ -86,9 +90,9 @@ private struct AllowanceText: View {
             VStack(spacing: 4) {
                 Text("YOU CAN SPEND").eyebrow()
                 amount(allowance.perDay)
-                Text("a day until the \(income)").font(.system(size: 12)).opacity(0.55)
+                Text("a day until the \(income)").font(.system(size: 12)).opacity(0.55).privacySensitive()
                 if allowance.until.late {
-                    Text("\(income) is late").font(Living.caption).opacity(0.4)
+                    Text("\(income) is late").font(Living.caption).opacity(0.4).privacySensitive()
                 }
             }
             .accessibilityElement(children: .combine)
@@ -106,5 +110,6 @@ private struct AllowanceText: View {
         }
         .frame(maxWidth: 184)
         .foregroundStyle(perDay < .zero ? Color.red : .white)
+        .bigAmount()
     }
 }

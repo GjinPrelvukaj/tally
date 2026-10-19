@@ -10,6 +10,8 @@ struct MonthLine: View {
     let today: Int?
     let paydays: [LinePayday]
     @State private var hovered: Int?
+    /// While amounts are hidden the line keeps its shape but says no amounts.
+    @Environment(\.redactionReasons) private var redaction
 
     /// Month's light, left to right.
     private static let light = Gradient(colors: [.hex(0xA78BFA), .ahead])
@@ -60,7 +62,7 @@ struct MonthLine: View {
             guard let point = line.first(where: { $0.day == payday.day }) else { continue }
             let at = frame.point(point)
             dot(&ctx, at, radius: 3.5, color: payday.projected ? .white.opacity(0.4) : .hex(0xA78BFA), glows: !payday.projected)
-            if hovered == nil { label(&ctx, payday.amount.wholeEuros, at: CGPoint(x: at.x, y: at.y - 8), anchor: .bottom, opacity: 0.45) }
+            if hovered == nil, !redaction.contains(.privacy) { label(&ctx, payday.amount.wholeEuros, at: CGPoint(x: at.x, y: at.y - 8), anchor: .bottom, opacity: 0.45) }
         }
         if let today, let point = line.first(where: { $0.day == today }) {
             let at = frame.point(point)
@@ -78,7 +80,8 @@ struct MonthLine: View {
         let at = frame.point(point)
         ctx.stroke(Path { $0.move(to: CGPoint(x: at.x, y: 14)); $0.addLine(to: at) }, with: .color(.white.opacity(0.15)), lineWidth: 1)
         dot(&ctx, at, radius: 3, color: .white)
-        let text = ctx.resolve(Text("\(ordinal(point.day)) · \(point.balance.formatted)").font(Living.caption).monospacedDigit()
+        let words = redaction.contains(.privacy) ? ordinal(point.day) : "\(ordinal(point.day)) · \(point.balance.formatted)"
+        let text = ctx.resolve(Text(words).font(Living.caption).monospacedDigit()
             .foregroundStyle(.white.opacity(0.85)))
         let half = text.measure(in: frame.size).width / 2
         ctx.draw(text, at: CGPoint(x: min(max(at.x, half), frame.size.width - half), y: 0), anchor: .top)

@@ -7,6 +7,10 @@ struct Sidebar: View {
     let section: Screen
     let go: (Screen) -> Void
     let log: () -> Void
+    @Environment(\.toggleAmounts) private var toggleAmounts
+    @Environment(\.redactionReasons) private var redaction
+
+    private var hidden: Bool { redaction.contains(.privacy) }
 
     var body: some View {
         let ledger = store.ledger()
@@ -25,16 +29,23 @@ struct Sidebar: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("YOU CAN SPEND").eyebrow()
                     Text(allowance.perDay.formatted).font(.system(size: 17, weight: .semibold)).monospacedDigit()
+                        .bigAmount()
                         .foregroundStyle(allowance.perDay < .zero ? Color.red : .white)
-                    Text("a day until the \(allowance.until.item.amount.wholeEuros)").font(Kit.quiet).opacity(0.45)
+                    Text("a day until the \(allowance.until.item.amount.wholeEuros)").font(Kit.quiet).opacity(0.45).privacySensitive()
                 }
                 .padding(.horizontal, 10)
                 .padding(.bottom, Kit.Space.group)
                 .accessibilityElement(children: .combine)
                 .transition(.opacity)
             }
-            Button(action: log) { Label("Log a Spend", systemImage: "plus").frame(maxWidth: .infinity) }
-                .buttonStyle(.primary(section.tint))
+            HStack(spacing: Kit.Space.item) {
+                Button(action: log) { Label("Log a Spend", systemImage: "plus").frame(maxWidth: .infinity) }
+                    .buttonStyle(.primary(section.tint))
+                Button(action: toggleAmounts) { Image(systemName: hidden ? "eye.slash" : "eye").frame(width: 14) }
+                    .buttonStyle(.secondary)
+                    .help(hidden ? "Show amounts (⇧⌘H)" : "Hide amounts (⇧⌘H)")
+                    .accessibilityLabel(hidden ? "Show amounts" : "Hide amounts")
+            }
         }
         .padding(.horizontal, 12)
         .padding(.top, 20)

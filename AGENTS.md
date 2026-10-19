@@ -33,6 +33,8 @@
   drawer open, `--screen log` Today with Quick log open, `--screen firstrun` a demo that
   has not been set up. Other values are ignored.
 - `--after-payday`: the salary added on 1 November with its planned split, today pinned there.
+- `--hidden`: every amount starts hidden. `--screen settings` opens the Settings window too (a second window: capture it by its
+  width, 440). The demo never reads the real app's settings and never locks.
 - Keys and clicks are not delivered to a demo started from a shell, so the editors inside a sheet (a plan item, a
   typed amount, the right-click "Set Balance…", ⌘N / ⌘,) are checked by hand in the real app.
 - Month in the demo has only October (the demo starts there), so paging back through months, ⌘← / ⌘→ and the hover
@@ -89,7 +91,7 @@ whole session. It only arrives while the demo is the active app, which a demo st
 
 ## Style
 
-- **Looks live in `Design/Kit.swift`.** Screens use its fonts (`Kit.body`, `Kit.quiet`, `Kit.title`, `Kit.amount`), buttons (`.primary`, `.secondary`, `.quiet`, `.chip`), `.toggleStyle(.glass)`, `.eyebrow()` and `.groupLabel()`. No inline font sizes, fills or stock switches in a screen; change the kit instead. Gaps come from `Kit.Space` (label 6, item 8, group 16, edge 20). Sheets are `AmountField` + content + `SheetFooter`, wrapped in `.drawer(close:)`. A section's content uses `.pane()`; an editor beside a list sits in `SidePanel`; lists of rows use `.rowPanel()`.
+- **Looks live in `Design/Kit.swift`.** Screens use its fonts (`Kit.body`, `Kit.quiet`, `Kit.title`, `Kit.amount`), buttons (`.primary`, `.secondary`, `.quiet`, `.chip`), `.toggleStyle(.glass)`, `.eyebrow()` and `.groupLabel()`. No inline font sizes, fills or stock switches in a screen; change the kit instead. Gaps come from `Kit.Space` (label 6, item 8, group 16, edge 20); fields come in `Kit.field`, `Kit.rowAmount` and `Kit.largeField` widths only. Any amount drawn on screen is `.privacySensitive()` (a big one `.bigAmount()`). Sheets are `AmountField` + content + `SheetFooter`, wrapped in `.drawer(close:)`. A section's content uses `.pane()`; an editor beside a list sits in `SidePanel`; lists of rows use `.rowPanel()`.
 - **No lazy stacks or grids inside a sheet:** their items are made after the sheet starts rising and pop in before it arrives. The sheet container has `.geometryGroup()` so it moves as one piece.
 - The icon: edit `Scripts/make-icon.swift`, run `Scripts/make-icon.sh`, commit `Resources/AppIcon.icns`.
 

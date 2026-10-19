@@ -40,6 +40,7 @@ struct PotsView: View {
             Text(YearMonth(today, calendar: ledger.calendar).name.uppercased())
                 .eyebrow()
             RollingDigits(text: ledger.total.formatted, font: .system(size: 30, weight: .semibold))
+                .bigAmount()
             Text("across four pots").font(.system(size: 12)).opacity(0.55)
         }
         .accessibilityElement(children: .combine)
@@ -49,7 +50,7 @@ struct PotsView: View {
         Button { onPayday(income) } label: {
             HStack(spacing: 6) {
                 Circle().fill(Color.arrived).frame(width: 6, height: 6).shadow(color: .arrived.opacity(0.7), radius: 2.5)
-                Text("\(income.item.amount.wholeEuros) arrived?")
+                Text("\(income.item.amount.wholeEuros) arrived?").privacySensitive()
             }
             .font(.system(size: 12))
         }
@@ -68,6 +69,7 @@ struct PotsView: View {
                 let paidOff = pot == .card && balance == .zero
                 VStack(spacing: 8) {
                     Text(paidOff ? "Paid off" : balance.formatted)
+                        .privacySensitive(!paidOff)
                         .font(.system(size: 12)).monospacedDigit()
                         .lineLimit(1).minimumScaleFactor(0.6)
                         .opacity(paidOff ? 0.45 : 0.88)
@@ -88,7 +90,7 @@ struct PotsView: View {
     }
 }
 
-private extension Pot {
+extension Pot {
     /// Short enough to sit under a tube.
     var tubeName: String {
         switch self {

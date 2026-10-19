@@ -47,7 +47,7 @@ struct PaydaySheet: View {
             Text(item.name).lineLimit(1)
                 .foregroundStyle(Cents.parse(text.wrappedValue) == nil ? Color.red : .white.opacity(0.88))
             Spacer(minLength: 8)
-            GlassField(label: item.name, text: text, valid: Cents.parse(text.wrappedValue) != nil).frame(width: 84)
+            GlassField(label: item.name, text: text, valid: Cents.parse(text.wrappedValue) != nil).frame(width: Kit.rowAmount)
             Text("€").opacity(0.55)
         }
         .font(.system(size: 13))

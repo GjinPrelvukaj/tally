@@ -47,4 +47,6 @@ import Testing
     #expect(Cents(20000).short == "200\u{00A0}€")
     #expect(Cents(240000).short == "2\u{00A0}400\u{00A0}€")
     #expect(Cents(6340).short == "63,40\u{00A0}€")
+    // A round debt keeps its minus.
+    #expect(Cents(-4500).short == "\u{2212}45\u{00A0}€")
 }

@@ -32,7 +32,8 @@ A sidebar takes you between Today, Pots, Month, your entries and the plan (⌘1�
 ## Private by design
 
 Tally has no account, no network access and no analytics. Your data is a single file on your Mac
-(`~/Library/Application Support/Budget/Budget.store`) and never leaves it.
+(`~/Library/Application Support/Budget/Budget.store`) and never leaves it. In Settings (⌘,) it can lock behind
+Touch ID, and every amount can be hidden at once (click a big number, the eye, or press ⇧⌘H) when someone is looking.
 
 ## Download
 

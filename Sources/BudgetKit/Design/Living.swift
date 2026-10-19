@@ -268,8 +268,18 @@ struct RollingDigits: View {
     let text: String
     let font: Font
     @Environment(\.accessibilityReduceMotion) private var reduceMotion // Budget: no rolling under Reduce Motion
+    @Environment(\.redactionReasons) private var redaction // Budget: amounts can be hidden
 
     var body: some View {
+        // Budget: hidden, one bar the same width whatever the amount, so not even its number of digits shows.
+        if redaction.contains(.privacy) {
+            Text("0 000,00 €").font(font).monospacedDigit().accessibilityLabel("Hidden")
+        } else {
+            digits
+        }
+    }
+
+    private var digits: some View {
         HStack(spacing: 0) {
             ForEach(Array(text.enumerated()), id: \.offset) { i, character in
                 Text(String(character))

@@ -68,7 +68,7 @@ struct AmountField: View {
             Text(label).eyebrow()
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 GlassField(label: label, text: $text, large: true, align: .leading, valid: valid, autofocus: autofocus)
-                    .frame(width: 120)
+                    .frame(width: Kit.largeField)
                 Text("€").font(.system(size: 15, weight: .semibold)).opacity(0.5)
             }
         }
