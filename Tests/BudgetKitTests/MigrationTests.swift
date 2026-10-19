@@ -36,3 +36,32 @@ import SwiftData
         #expect(ledger.categories.map(\.id) == ["food", "goingOut", "clothes", "fragrance", "other"])
     }
 }
+
+/// A file saved with categories and the partner (`SchemaV2`) opens with its partner's spends still owed.
+@MainActor @Suite struct MigrationV2Tests {
+    @Test func aFileWithThePartnerOpensWithWhatTheyOwe() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "tally-migration-\(UUID().uuidString)")
+        let url = folder.appending(path: "Budget.store")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        do {
+            let old = try ModelContainer(for: Schema(versionedSchema: SchemaV2.self), migrationPlan: nil,
+                                         configurations: ModelConfiguration(url: url, cloudKitDatabase: .none))
+            let context = ModelContext(old)
+            context.insert(SchemaV1.SettingsRecord(startBalances: Data(#"{"main":15000}"#.utf8), startYear: 2026, startMonth: 10,
+                                                   goals: Data("{}".utf8)))
+            context.insert(SchemaV2.CategoryRecord(id: "food", name: "Food", pot: "main", order: 0, retired: false))
+            context.insert(SchemaV2.EntryRecord(id: UUID(), date: Fixtures.date(2026, 10, 19), amount: 1000, kind: "spend",
+                                                from: "main", category: "goingOut", note: "coffee", movesMoney: true,
+                                                partner: "half", owed: 500))
+            try context.save()
+        }
+
+        let store = try Store(url: url, calendar: Fixtures.calendar)
+        let ledger = store.ledger()
+        #expect(ledger.partnerOwes == Cents(500))
+        #expect(ledger.entries.first { $0.kind == .spend }?.person == nil)
+        #expect(ledger.categories.map(\.id) == ["food"])
+    }
+}

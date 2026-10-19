@@ -38,9 +38,11 @@ public struct Ledger: Sendable {
         Pot.allCases.reduce(.zero) { $0 + balance($1) }
     }
 
-    /// What moved money in the month, newest first: the list to look through, edit or delete.
+    /// What moved money in the month, and what was owed with someone from before, newest first: the list to look
+    /// through, edit or delete.
     public func entries(in month: YearMonth) -> [Entry] {
-        entries.filter { $0.movesMoney && YearMonth($0.date, calendar: calendar) == month }.sorted { $0.date > $1.date }
+        entries.filter { ($0.movesMoney || $0.kind.isWithSomeone) && YearMonth($0.date, calendar: calendar) == month }
+            .sorted { $0.date > $1.date }
     }
 
     /// The balance as it stood when the given day ended.

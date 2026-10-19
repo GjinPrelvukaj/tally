@@ -6,7 +6,7 @@ import SwiftUI
 public enum OpenSheet: String, Sendable { case payday, log }
 
 /// The cards that open in the middle of the window, apart from the payday one (which needs an income).
-enum Sheet: Hashable { case log, balance(Pot), paidBack }
+enum Sheet: Hashable { case log, balance(Pot), paidBack, money(Someone) }
 
 /// The window's content: the sidebar, and the chosen section in the pane beside it.
 /// Before the first run, the first run instead.
@@ -123,6 +123,7 @@ public struct RootView: View {
         case .month: MonthView(store: store, today: day)
         case .insights: InsightsView(store: store, today: day)
         case .settings: SettingsView(store: store)
+        case .people: PeopleView(store: store) { show(.money($0)) }
         case .entries: EntriesPane(store: store, today: day)
         case .plan: PlanPane(store: store, month: YearMonth(day, calendar: store.ledger().calendar))
         }
@@ -183,9 +184,15 @@ public struct RootView: View {
         case .balance(let pot):
             SetBalanceSheet(pot: pot, balance: store.ledger().balance(pot),
                             set: { store.setBalance(pot, to: $0, at: today()); close() }, cancel: close)
+        case .money(let who):
+            let ledger = store.ledger()
+            MoneyWithSheet(who: who, people: ledger.people, ledger: ledger, partnerName: partnerName,
+                           save: { kind, amount, person, before in
+                               store.record(kind, amount, with: person, before: before, at: today()); close()
+                           }, cancel: close)
         case .paidBack:
             PaidBackSheet(name: partnerName, owes: store.ledger().partnerOwes,
-                          add: { store.partnerPaidBack($0, at: today()); close() }, cancel: close)
+                          add: { store.record(.repayment, $0, with: nil, at: today()); close() }, cancel: close)
         }
     }
 

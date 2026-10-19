@@ -29,7 +29,7 @@
 `Budget --demo` runs on a made-up 19 October 2026 on the starter plan, in memory (Main 640, Clothes 240, Emergency
 2 150, card −45; this month's salary items already paid), today pinned to 19 Oct 2026 12:00; it never opens the file on disk.
 
-- `--screen today|pots|month|insights|entries|plan|settings`: the section it opens on; `--screen payday` is 1 November with the salary due and its
+- `--screen today|pots|month|insights|entries|plan|people|settings`: the section it opens on; `--screen payday` is 1 November with the salary due and its
   card open, `--screen log` Today with Quick log open, `--screen firstrun` a demo that
   has not been set up. Other values are ignored.
 - `--after-payday`: the salary added on 1 November with its planned split, today pinned there.

@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// The sections in the sidebar, top to bottom: ⌘1 to ⌘6, and Settings ⌘, at the foot.
+/// The sections in the sidebar, top to bottom: ⌘1 to ⌘7, and Settings ⌘, at the foot.
 public enum Screen: Int, CaseIterable, Sendable {
-    case today, pots, month, insights, entries, plan, settings
+    case today, pots, month, insights, entries, plan, people, settings
 
-    /// From `--screen today|pots|month|insights|entries|plan|settings`; anything else is nil.
+    /// From `--screen today|pots|month|insights|entries|plan|people|settings`; anything else is nil.
     public init?(named name: String) {
         guard let screen = Screen.allCases.first(where: { "\($0)" == name }) else { return nil }
         self = screen
@@ -21,6 +21,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .insights: "Insights"
         case .entries: "Entries"
         case .plan: "Plan"
+        case .people: "People"
         case .settings: "Settings"
         }
     }
@@ -33,6 +34,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .insights: "sparkles"
         case .entries: "list.bullet"
         case .plan: "calendar"
+        case .people: "person.2"
         case .settings: "gearshape"
         }
     }
@@ -47,6 +49,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .plan: [Pot.main.light, .arrived, Pot.main.light]
         case .insights: [.hex(0xFBBF24), .hex(0xA78BFA), .hex(0xFBBF24)]
         case .settings: [.hex(0x94A3B8), Pot.main.light, .hex(0x94A3B8)]
+        case .people: [.hex(0xF472B6), .arrived, .hex(0xF472B6)]
         case .pots: Pot.allCases.map(\.light)
         case .month: [.hex(0xA78BFA), .hex(0xA78BFA), .ahead]
         }

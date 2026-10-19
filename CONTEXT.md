@@ -5,7 +5,7 @@ Read this first, then [AGENTS.md](AGENTS.md) for how to work here.
 ## What it is
 
 A small native macOS app for one person's monthly money: a monthly plan, what actually happened, and a daily
-allowance, in one glass window: a sidebar of six sections (Today, Pots, Month, Insights, Entries, Plan) and Settings, and the chosen one beside it. Swift 6, SwiftUI, SwiftData, macOS 26 or
+allowance, in one glass window: a sidebar of seven sections (Today, Pots, Month, Insights, Entries, Plan, People) and Settings, and the chosen one beside it. Swift 6, SwiftUI, SwiftData, macOS 26 or
 later, no network, no third-party packages. Its look (black glass, colour as light from the bottom edge, springs,
 nothing moves unless something happens) comes from the author's app Brimlight.
 
@@ -17,7 +17,7 @@ Keep the data path: renaming it would make the app open empty on a Mac that alre
 
 Everything below is built: the money logic (balances, "still to pay" with carry-over, next income, the daily
 allowance, the emergency fund's goal month, the month line), the SwiftData store, a starter plan for the first run,
-the sidebar and its six sections and Settings, Insights (exact, tested rules) with Ask Tally, the Plan's and the entries' editors in a panel on the right, and the cards in the
+the sidebar and its seven sections and Settings, People (money lent, borrowed or owed from before), Insights (exact, tested rules) with Ask Tally, the Plan's and the entries' editors in a panel on the right, and the cards in the
 middle: Quick log, a payday, Set Balance, Paid Back; the first run. See `docs/mac-layout.md` for the layout as agreed.
 Undo takes back the last recorded action. A style kit (`Design/Kit.swift`) holds every size, button and switch.
 Privacy: every amount can be hidden at once, and Tally can lock behind Touch ID (Settings, ⌘,).
@@ -26,7 +26,7 @@ Privacy: every amount can be hidden at once, and Tally can lock behind Touch ID 
 (they are fixed: Main, Clothes, Emergency fund, Card).
 
 **Not checked by hand yet** (keys and clicks don't reach a demo started from a script): clicking the sidebar,
-rows, the payday pour, ⌘N / ⌘1–⌘6 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, the plan and entry editors (their pop-ups), typing a question into Ask Tally, pulling a card down,
+rows, the payday pour, ⌘N / ⌘1–⌘7 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, recording money with someone, the plan and entry editors (their pop-ups), typing a question into Ask Tally, pulling a card down,
 month paging, resizing the window and it keeping its size, clicking a big number or the eye to hide amounts, the Touch ID lock
 (the demo never locks) and turning it on in Settings, two-finger swipes closing a card (down) or an editor panel (right),
 clicking into a hidden amount field to show it.
@@ -34,7 +34,7 @@ clicking into a hidden amount field to show it.
 ## Where things live
 
 ```
-Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|insights|entries|plan|settings`: that section; `payday`, `log`: Today with that card open; `firstrun`: a demo not yet set up)
+Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|insights|entries|plan|people|settings`: that section; `payday`, `log`: Today with that card open; `firstrun`: a demo not yet set up)
 Sources/BudgetKit/Money/Cents.swift   money in whole cents: formatting (`formatted`, `wholeEuros` "2 000", `editable` "2 450,17" for a field), parsing, floor division
 Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027")
 Sources/BudgetKit/Money/Model.swift   Pot, Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)`); a spend names its category by key;
@@ -50,8 +50,10 @@ Sources/BudgetKit/Money/Insights+Plan.swift  a noted spend in each of the last 3
 Sources/BudgetKit/Money/Ask.swift  `Question` (topic, period, category, search, with the partner), `Question.checked(against:categories:partnerName:)` (a
                                       category or word kept only if said, cues decide the topic, time words win), `Ledger.answer` (an `Answer`: title, lines,
                                       how it was understood), periods: today, this week from Monday, last week, this month, last month
-Sources/BudgetKit/Money/Partner.swift  `PartnerShare` (with, half, forThem; `theirs(of:)`, half rounding down), `Ledger.partnerOwes`
-Sources/BudgetKit/Money/Ledger.swift  Ledger: start balances + plan + entries; `balance(_:)`, `balance(_:endOf:)`, `total` (every pot, the card's debt taken off), `entries(in:)` (a month's money-moving entries, newest first), `categories`, `category(_:)` (by key; an unknown key reads "Other")
+Sources/BudgetKit/Money/Partner.swift  `PartnerShare` (with, half, forThem; `theirs(of:)`, half rounding down); `Ledger.owes(_ person:)` (what they owe you,
+                                      negative: you owe them; nil is the partner, whose owed spend parts count), `partnerOwes`, `people` (partner first, then by
+                                      name, one person whatever the case), `EntryKind.isWithSomeone` (lent, borrowed, repayment, paidBack)
+Sources/BudgetKit/Money/Ledger.swift  Ledger: start balances + plan + entries; `balance(_:)`, `balance(_:endOf:)`, `total` (every pot, the card's debt taken off), `entries(in:)` (a month's money-moving entries and money owed from before, newest first), `categories`, `category(_:)` (by key; an unknown key reads "Other")
 Sources/BudgetKit/Money/Ledger+Due.swift  `Due`, `isDone`, `stillToPay(today:)`: done / still to pay, with unpaid items carried over; `split(of:)`: an income's undone items; `upcomingIncomes(today:)`: this month's incomes not yet due; `asked(_:)`: paying off the card asks for what is owed
 Sources/BudgetKit/Money/Ledger+Forecast.swift  `nextIncome`, `allowance`, `goalMonth`, `paydays`: what can be spent a day, when the emergency fund is full, which days are paydays
 Sources/BudgetKit/Money/Ledger+MonthLine.swift  `monthLine`: Main at the end of each day from the first-run day, past from entries, the rest projected from the plan
@@ -60,9 +62,11 @@ Sources/BudgetKit/Money/PlanGroup.swift  the plan's four headings (Comes in / Go
 Sources/BudgetKit/Money/Tubes.swift   the sums behind Pots' tubes: `held` (the card as what's owed), the shared `scale` (largest held amount or goal), `level`
 Sources/BudgetKit/Money/Payday.swift  `Payday.leftInMain`: the income less everything paid out of it
 Sources/BudgetKit/Store/Records.swift  SwiftData records (plan item, entry, settings, category) with their conversion to and from the plain values
-Sources/BudgetKit/Store/Schema.swift  `SchemaV1` (frozen copies of the records before versions), `SchemaV2` (+ `CategoryRecord`, `EntryRecord.partner`, `owed`, `method`),
-                                      `TallyMigration` (lightweight V1 → V2); the container opens through it
+Sources/BudgetKit/Store/Schema.swift  `SchemaV1` (frozen copies of the records before versions), `SchemaV2` (+ `CategoryRecord`, `EntryRecord.partner`, `owed`, `method`;
+                                      frozen copies), `SchemaV3` (+ `EntryRecord.person`), `TallyMigration` (lightweight V1 → V2 → V3); the container opens through it
 Sources/BudgetKit/Store/Store.swift   `Store`: opens the database (seeds the five categories into a store without any), `ledger()` snapshot, `revision`, and every action the screens call;
+Sources/BudgetKit/Store/Store.swift (people)  `record(_ kind:_:with:pot:before:at:)`: lent / paid back go out of Main, repayment / borrowed come in;
+                                      `before` (owed from before Tally) moves no money
 Sources/BudgetKit/Store/Store+Categories.swift  `addCategory(_:pot:)`, `update(_ category:)` (name, pot for spends from now on, retired)
 Sources/BudgetKit/Store/Preferences.swift  `Preference`: the keys kept in the app's preferences (the lock, how amounts start, whether they were last hidden);
                                       `AmountsOnOpen` (Shown, Hidden, As I Left Them, the default; the old "always hidden" switch reads as Hidden)
@@ -83,7 +87,7 @@ Sources/BudgetKit/Design/Swipe.swift  `.swipeToClose(.down|.right, pull:ended:)`
 Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, insights, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours and `tint`, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
 Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `WindowSize`
 Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's pane, the cards over the blurred window (nothing behind takes clicks while one is open),
-                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘6, ⌘, (Settings), ⌘Z, ⇧⌘H; `FirstRunView` before set-up; `LockView` in place of everything
+                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘7, ⌘, (Settings), ⌘Z, ⇧⌘H; `FirstRunView` before set-up; `LockView` in place of everything
                                       while locked (on open when the setting is on, and again when the Mac sleeps or its screen locks; never in the demo);
                                       amounts hidden by `.redacted(reason: .privacy)` over the sidebar and pane (starts as `AmountsOnOpen` says; each toggle in the real app is kept for As I Left Them)
                                       The sections read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
@@ -106,6 +110,10 @@ Sources/BudgetKit/Screens/SettingsView.swift  Settings, a section in the sidebar
 Sources/BudgetKit/Screens/CategorySettings.swift  Settings → Categories: one card of rows, name (saved as typed), pot (`GlassPicker`), a ⋯ menu to Retire / Bring Back; Add on its own card
 Sources/BudgetKit/Screens/PartnerChoice.swift  Just Me / With Ana / Half / For Ana (a `GlassSegments` bar, or chips two by two where narrow), "Ana Pays Me Back";
                                       `partnerName` in the environment (Settings in the real app, "Sam" in the demo)
+Sources/BudgetKit/Screens/PeopleView.swift  People: everyone money is open with ("Ben owes you", "You owe Lena", settled below), Record; a row opens
+                                      `MoneyWithSheet` for them (`Someone`: new, partner, named)
+Sources/BudgetKit/Screens/MoneyWithSheet.swift  amount, who (chips of people), I Lent / Paid Me Back / I Borrowed / I Paid Back, From before Tally, and how it
+                                      will stand after ("Then Ben owes you 30,00 €"); the partner's own name means the partner
 Sources/BudgetKit/Screens/PaidBackSheet.swift  "Ana paid back": how much (all they owe to start), into Main; Today shows "Ana owes you" with Paid Back
 Sources/BudgetKit/Screens/TodayRing.swift  the month's days as dots: gone lit, paydays larger (green once come, cyan ahead), today white and largest
 Sources/BudgetKit/Screens/StillToPayList.swift  "Still to pay": click = paid at the planned amount, ⌥-click or Edit = change it first (above 0; on the card's row
@@ -195,7 +203,8 @@ persists; the file is `~/Library/Application Support/Budget/Budget.store`), `Des
 - `setUp` (first run) takes the typed balances plus `paid`, the plan items already paid this month: they are
   recorded as done without moving money. Emergency goal from `Seed.goals` (6 000,00 for the starter plan). It does nothing a second time.
 - A spend comes out of its category's pot (by bank card or cash; it remembers which), or the credit card's debt grows. Its pot is kept on the entry, so moving a
-  category to another pot changes later spends only. With the partner, `owed` is their part when they pay it back; a `repayment`
+  category to another pot changes later spends only. With the partner, `owed` is their part when they pay it back; money with anyone is
+  `lent` / `borrowed` / `repayment` / `paidBack` with `person` (nil: the partner), moving no money when it was owed from before; a `repayment`
   entry brings money into Main and off `partnerOwes`.
 - `payday` records the income to its pot and one entry per chosen split item, all for the income's month; a split item
   already done that month (paid early or dismissed) is left out, and so is one typed as 0 (it stays due). A 0 is never recorded as a payment, spend or income (`Cents.parsePositive`; use "Not This Month" for nothing).

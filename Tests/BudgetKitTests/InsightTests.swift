@@ -162,6 +162,16 @@ import Foundation
         #expect(of(.partner, ledger(main: .euros(600), entries: entries)).isEmpty)
     }
 
+    @Test func anyoneWhoOwesOrIsOwedSaysSinceWhen() {
+        let entries = [Entry(date: Fixtures.date(2026, 10, 3), amount: .euros(50), kind: .lent, from: .main, person: "Ben"),
+                       Entry(date: Fixtures.date(2026, 10, 9), amount: .euros(20), kind: .borrowed, to: .main, movesMoney: false, person: "Ana"),
+                       Entry(date: Fixtures.date(2026, 10, 12), amount: .euros(50), kind: .repayment, to: .main, person: "Cleo"),
+                       Entry(date: Fixtures.date(2026, 10, 2), amount: .euros(50), kind: .lent, from: .main, person: "Cleo")]
+        let insights = of(.partner, ledger(main: .euros(600), entries: entries))
+        #expect(insights.map(\.title) == ["You owe Ana 20,00\u{00A0}€", "Ben owes you 50,00\u{00A0}€"])
+        #expect(insights.last?.detail == "Open since the 3rd of October.")
+    }
+
     // MARK: Order
 
     @Test func warningsComeFirstThenNewsThenGoodNews() {

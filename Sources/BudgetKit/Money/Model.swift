@@ -78,8 +78,12 @@ public struct PlanItem: Identifiable, Hashable, Codable, Sendable {
 /// (cash is money taken out of it before), the spend remembering it was cash.
 public enum PaymentMethod: String, Codable, CaseIterable, Sendable { case bank, card, cash }
 
-/// `repayment`: the partner paid back what they owed, into `to`.
-public enum EntryKind: String, Codable, Sendable { case income, transfer, payment, spend, adjustment, dismissed, repayment }
+/// Money open with a person (`Entry.person`; nil is the partner): `lent` (out of `from`, they owe it), `repayment`
+/// (they paid back, into `to`), `borrowed` (into `to`, you owe it), `paidBack` (you paid them back, out of `from`).
+/// Owed from before Tally is the same kind with `movesMoney` false.
+public enum EntryKind: String, Codable, Sendable {
+    case income, transfer, payment, spend, adjustment, dismissed, repayment, lent, borrowed, paidBack
+}
 
 /// Something that happened. `movesMoney` is false for "paid before you started" and for `dismissed`.
 /// An adjustment has `from == nil`, `to == pot` and a signed amount.
@@ -102,10 +106,12 @@ public struct Entry: Identifiable, Hashable, Codable, Sendable {
     public var owed: Cents?
     /// How a spend was paid; nil on one saved before this was kept (its pot says card or not).
     public var method: PaymentMethod?
+    /// Who money is open with, by name; nil is the partner.
+    public var person: String?
 
     public init(id: UUID = UUID(), date: Date, amount: Cents, kind: EntryKind, from: Pot? = nil, to: Pot? = nil,
                 category: String? = nil, note: String? = nil, planItem: UUID? = nil, forMonth: YearMonth? = nil,
-                movesMoney: Bool = true, partner: PartnerShare? = nil, owed: Cents? = nil, method: PaymentMethod? = nil) {
+                movesMoney: Bool = true, partner: PartnerShare? = nil, owed: Cents? = nil, method: PaymentMethod? = nil, person: String? = nil) {
         self.id = id
         self.date = date
         self.amount = amount
@@ -120,5 +126,6 @@ public struct Entry: Identifiable, Hashable, Codable, Sendable {
         self.partner = partner
         self.owed = owed
         self.method = method
+        self.person = person
     }
 }
