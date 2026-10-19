@@ -126,12 +126,13 @@ public struct RootView: View {
                                onPaidBack: { show(.paidBack) })
         case .pots: PotsView(store: store, today: day, onPayday: open, onSetBalance: { show(.balance($0)) })
         case .month: MonthView(store: store, today: day)
+        case .insights: InsightsView(store: store, today: day)
         case .entries: EntriesPane(store: store, today: day)
         case .plan: PlanPane(store: store, month: YearMonth(day, calendar: store.ledger().calendar))
         }
     }
 
-    /// ⌘N logs a spend, ⌘1 to ⌘5 go to a section, ⇧⌘H hides amounts; hidden buttons, as the window has no menu of its own.
+    /// ⌘N logs a spend, ⌘1 to ⌘6 go to a section, ⇧⌘H hides amounts; hidden buttons, as the window has no menu of its own.
     @ViewBuilder private var shortcuts: some View {
         if store.isSetUp {
             Group {

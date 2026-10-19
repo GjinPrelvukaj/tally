@@ -72,6 +72,34 @@ struct GlassField: View {
     }
 }
 
+/// A note: a whole line with a pencil, roomier than a field in a row, so it reads as a place to write.
+struct NoteField: View {
+    @Binding var text: String
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HStack(spacing: Kit.Space.item) {
+            Image(systemName: "square.and.pencil").font(Kit.body).opacity(focused ? 0.8 : 0.45)
+            TextField("", text: $text)
+                .font(Kit.body)
+                .textFieldStyle(.plain)
+                .focused($focused)
+                // Drawn here, faint: a TextField's own prompt shows almost as bright as typed text.
+                .overlay(alignment: .leading) {
+                    if text.isEmpty { Text("Add a note: what, where, who").font(Kit.body).opacity(0.28).allowsHitTesting(false) }
+                }
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 36)
+        .background(.white.opacity(focused ? 0.12 : 0.06), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.white.opacity(focused ? 0.14 : 0.06), lineWidth: 1))
+        .contentShape(Rectangle())
+        .onTapGesture { focused = true }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Note")
+    }
+}
+
 /// The amount at the top of a sheet: its label, the field and the euro sign, the same in every sheet.
 struct AmountField: View {
     let label: String

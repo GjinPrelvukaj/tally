@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The window's left column: the five sections (⌘1 to ⌘5), what can be spent a day, and Log a Spend.
+/// The window's left column: the six sections (⌘1 to ⌘6), what can be spent a day, and Log a Spend.
 struct Sidebar: View {
     let store: Store
     let today: Date
@@ -19,6 +19,8 @@ struct Sidebar: View {
             item(.today, count: ledger.stillToPay(today: today).count)
             item(.pots)
             item(.month)
+            // How many need looking at: the warnings, not every insight.
+            item(.insights, count: store.loadError == nil ? ledger.insights(today: today, partnerName: "").filter { $0.level == .warning }.count : 0)
             Text("Records").groupLabel()
                 .padding(.leading, 10).padding(.top, Kit.Space.group).padding(.bottom, 4)
             item(.entries, count: ledger.entries(in: month).count)

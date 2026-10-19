@@ -26,10 +26,11 @@ struct EntryEditor: View {
                             valid: draft.amountCents != nil, autofocus: true)
             }
             if draft.isSpend {
+                // In Quick log's order: what it was for, how it was paid, who with, a note.
+                CategoryChips(categories: categories, chosen: draft.category) { draft.category = $0 }
                 PaymentMethodPicker(method: $draft.method)
                 if !partnerName.isEmpty { PartnerChoice(name: partnerName, share: $draft.partner, paysBack: $draft.paysBack) }
-                GlassField(label: "Note", text: $draft.note, align: .leading, hint: "Note (optional)", secret: false)
-                CategoryChips(categories: categories, chosen: draft.category) { draft.category = $0 }
+                NoteField(text: $draft.note)
             }
             Spacer(minLength: 0)
             Button(isAdjustment ? "Delete…" : "Delete Entry…") { confirmingDelete = true }
