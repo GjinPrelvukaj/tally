@@ -1,0 +1,213 @@
+import Foundation
+import SwiftData
+import Observation
+
+/// Everything saved, on this Mac. The screens only talk to this: they read `ledger()` and call the actions.
+/// Each action saves and bumps `revision`, so a view that read `ledger()` draws again.
+@MainActor @Observable
+public final class Store {
+    public private(set) var isSetUp = false
+    public private(set) var revision = 0
+    /// Set when saving to disk failed, so the screens can say so instead of pretending.
+    public private(set) var saveError: Error?
+    /// Set when reading from disk failed. Not observed: `ledger()` runs while a view draws, and a read
+    /// that fails must never be shown as an empty plan.
+    @ObservationIgnored public private(set) var loadError: Error?
+
+    /// The entries the last action wrote, so it can be taken back; one level only.
+    public private(set) var undoable: [UUID] = []
+    /// Goes up with every recording action (not with an undo), so the screens can offer "Undo" for a moment.
+    public private(set) var recordings = 0
+    public var canUndo: Bool { !undoable.isEmpty }
+
+    /// Kept for as long as the store lives: a context does not keep its container alive.
+    @ObservationIgnored private let container: ModelContainer
+    @ObservationIgnored private let context: ModelContext
+    @ObservationIgnored private let calendar: Calendar
+    @ObservationIgnored private var cached: (revision: Int, ledger: Ledger)?
+
+    /// `~/Library/Application Support/Budget/Budget.store`. The app is called Tally now, but the file keeps
+    /// its first name: renaming it would make the app start empty on a Mac that already has data.
+    public static var defaultURL: URL {
+        URL.applicationSupportDirectory.appending(path: "Budget/Budget.store")
+    }
+
+    public init(inMemory: Bool, calendar: Calendar = .current) {
+        precondition(inMemory, "use init(url:) to keep data on disk")
+        // An in-memory container only fails if the model types are wrong, which the tests catch.
+        container = try! Store.container(ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none))
+        self.context = ModelContext(container)
+        self.calendar = calendar
+    }
+
+    public init(url: URL, calendar: Calendar = .current) throws {
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        // `.none`: nothing can ever sync, whatever the app's entitlements say.
+        container = try Store.container(ModelConfiguration(url: url, cloudKitDatabase: .none))
+        self.context = ModelContext(container)
+        self.calendar = calendar
+        isSetUp = try settings() != nil
+    }
+
+    public convenience init(calendar: Calendar = .current) throws {
+        try self.init(url: Store.defaultURL, calendar: calendar)
+    }
+
+    private static func container(_ configuration: ModelConfiguration) throws -> ModelContainer {
+        try ModelContainer(for: PlanItemRecord.self, EntryRecord.self, SettingsRecord.self, configurations: configuration)
+    }
+
+    /// A snapshot of everything, for all the money logic. Cached until the next action.
+    /// If the disk cannot be read this is empty and `loadError` says why; actions then refuse to write.
+    public func ledger() -> Ledger {
+        currentLedger() ?? Ledger(start: [:], startMonth: YearMonth(.now, calendar: calendar), plan: [], entries: [], calendar: calendar)
+    }
+
+    public func goal(_ pot: Pot) -> Cents? { (attempt { try settings() } ?? nil)?.goalAmounts[pot] }
+
+    /// The real ledger, or nil when it could not be read (never cached, so the next call tries again).
+    private func currentLedger() -> Ledger? {
+        if let cached, cached.revision == revision { return cached.ledger }
+        guard let ledger = attempt({ try loadLedger() }) else { return nil }
+        cached = (revision, ledger)
+        return ledger
+    }
+
+    private func loadLedger() throws -> Ledger {
+        let settings = try settings()
+        let plan = try context.fetch(FetchDescriptor<PlanItemRecord>(sortBy: [SortDescriptor(\.order)]))
+        let entries = try context.fetch(FetchDescriptor<EntryRecord>(sortBy: [SortDescriptor(\.date)]))
+        return Ledger(start: settings?.balances ?? [:], startMonth: settings?.month ?? YearMonth(.now, calendar: calendar),
+                      plan: plan.map(\.value), entries: entries.map(\.value), calendar: calendar)
+    }
+
+    private func settings() throws -> SettingsRecord? {
+        try context.fetch(FetchDescriptor<SettingsRecord>()).first
+    }
+
+    /// Runs a read; a failure is remembered in `loadError` and gives nil, a success clears it.
+    private func attempt<T>(_ read: () throws -> T) -> T? {
+        do {
+            let value = try read()
+            loadError = nil
+            return value
+        } catch {
+            loadError = error
+            return nil
+        }
+    }
+
+    /// Saves and tells the screens something changed.
+    private func commit() {
+        do {
+            try context.save()
+            saveError = nil
+        } catch {
+            saveError = error
+        }
+        revision += 1
+    }
+
+    // MARK: Actions. Money is added as entries; only the last action can be taken back (`undo`).
+    /// First run: the balances now, the seeded plan, and what was already paid this month.
+    /// `paid` are plan items paid before the first run: done, but the balances typed in already include them.
+    public func setUp(balances: [Pot: Cents], paid: [UUID: Cents], today: Date,
+                      plan: [PlanItem] = Seed.plan, goals: [Pot: Cents] = Seed.goals) {
+        // Also look at the disk: a store that already holds settings must never be seeded again.
+        guard !isSetUp, attempt({ try context.fetchCount(FetchDescriptor<SettingsRecord>()) }) == 0 else { return }
+        let month = YearMonth(today, calendar: calendar)
+        context.insert(SettingsRecord(balances: balances, startMonth: month, goals: goals))
+        for (order, item) in plan.enumerated() { context.insert(PlanItemRecord(item, order: order)) }
+        for entry in Seed.paidEntries(paid, plan: plan, month: month, at: today) { context.insert(EntryRecord(entry)) }
+        isSetUp = true
+        commit()
+    }
+
+    /// A spend. On the card the debt grows; otherwise it comes out of the category's pot.
+    public func logSpend(_ amount: Cents, category: Category, note: String?, onCard: Bool, at date: Date) {
+        guard amount > .zero else { return }
+        let note = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        add(Entry(date: date, amount: amount, kind: .spend, from: onCard ? .card : category.pot, category: category,
+                  note: note?.isEmpty == false ? note : nil))
+    }
+
+    /// Paid, at the amount actually paid. A transfer moves money `from` to `to`; a payment leaves `from`.
+    public func markPaid(_ due: Due, amount: Cents, at date: Date) {
+        guard amount > .zero, isOpen(due), let entry = entry(for: due.item, month: due.month, amount: amount, at: date) else { return }
+        add(entry)
+    }
+
+    /// The income arrived, and each item chosen to be paid out of it was paid at its own amount.
+    /// An item already done that month (paid early, or dismissed) is left out, so nothing is paid twice;
+    /// so is one at 0, which stays due (and held back, as the income has come).
+    public func payday(_ income: Due, amount: Cents, split: [UUID: Cents], at date: Date) {
+        guard amount > .zero, let ledger = currentLedger(), !ledger.isDone(income.item.id, in: income.month) else { return }
+        var entries = [entry(for: income.item, month: income.month, amount: amount, at: date)]
+        for item in ledger.plan where !ledger.isDone(item.id, in: income.month) {
+            if let paid = split[item.id], paid > .zero { entries.append(entry(for: item, month: income.month, amount: paid, at: date)) }
+        }
+        record(entries.compactMap { $0 })
+    }
+
+    /// Takes back what the last action wrote. Plan edits in between do not matter: it goes by the entries' ids.
+    public func undo() {
+        guard canUndo, let records = attempt({ try context.fetch(FetchDescriptor<EntryRecord>()) }) else { return }
+        records.filter { undoable.contains($0.id) }.forEach(context.delete)
+        undoable = []
+        commit()
+    }
+
+    /// "Not this month": done, with no money moving.
+    public func dismiss(_ due: Due, at date: Date) {
+        guard isOpen(due) else { return }
+        add(Entry(date: date, amount: .zero, kind: .dismissed, planItem: due.item.id, forMonth: due.month, movesMoney: false))
+    }
+
+    /// Puts a pot right. The difference is written down as an adjustment, so nothing is hidden.
+    public func setBalance(_ pot: Pot, to target: Cents, at date: Date) {
+        guard let current = currentLedger()?.balance(pot), target != current else { return }
+        let difference = target - current
+        add(Entry(date: date, amount: difference, kind: .adjustment, to: pot))
+    }
+
+    /// Adds a new plan item at the end, or replaces an existing one in its place.
+    public func save(_ item: PlanItem) {
+        guard let records = attempt({ try context.fetch(FetchDescriptor<PlanItemRecord>()) }) else { return }
+        if let record = records.first(where: { $0.id == item.id }) {
+            if record.value.kind == .income && item.kind != .income { records.forEach { $0.stopWaiting(on: item.id) } }
+            record.apply(item)
+        } else {
+            context.insert(PlanItemRecord(item, order: (records.map(\.order).max() ?? -1) + 1))
+        }
+        commit()
+    }
+
+    /// Entries that point at the item stay, so history and balances do not change. Items that waited for it become "any day".
+    public func delete(_ item: UUID) {
+        guard let records = attempt({ try context.fetch(FetchDescriptor<PlanItemRecord>()) }) else { return }
+        records.forEach { $0.stopWaiting(on: item) }
+        records.filter { $0.id == item }.forEach(context.delete)
+        commit()
+    }
+
+    /// Still waiting for that month. A double-click or a second tap must never record it twice;
+    /// a ledger that can't be read counts as not open, so nothing is written blind.
+    private func isOpen(_ due: Due) -> Bool {
+        currentLedger()?.isDone(due.item.id, in: due.month) == false
+    }
+
+    private func add(_ entry: Entry) { record([entry]) }
+
+    /// One action's entries, written and remembered for `undo`.
+    private func record(_ entries: [Entry]) {
+        for entry in entries { context.insert(EntryRecord(entry)) }
+        undoable = entries.map(\.id)
+        recordings += 1
+        commit()
+    }
+
+    private func entry(for item: PlanItem, month: YearMonth, amount: Cents, at date: Date) -> Entry? {
+        guard let kind = item.kind.entryKind else { return nil }
+        return Entry(date: date, amount: amount, kind: kind, from: item.from, to: item.to, planItem: item.id, forMonth: month)
+    }
+}
