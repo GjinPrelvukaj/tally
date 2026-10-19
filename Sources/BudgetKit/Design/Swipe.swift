@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Which way two fingers on the trackpad close something: the way it came. A drawer rose, so it goes down;
+/// Which way two fingers on the trackpad close something: the way it came. A card in the middle is pulled down;
 /// a panel slid in from the right, so it goes right.
 enum SwipeDirection {
     case down, right
@@ -18,7 +18,7 @@ enum SwipeDirection {
 
 extension View {
     /// Two fingers pull it `direction`, `pull` following them; when they lift, `ended` gets how far they went.
-    /// While it is open, a drawer takes the scroll so the pane behind doesn't scroll under it.
+    /// While it is open, a card takes the scroll so the pane behind doesn't scroll under it.
     func swipeToClose(_ direction: SwipeDirection, pull: Binding<CGFloat>, ended: @escaping (CGFloat) -> Void) -> some View {
         modifier(SwipeToClose(direction: direction, pull: pull, ended: ended))
     }

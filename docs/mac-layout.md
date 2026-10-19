@@ -28,6 +28,7 @@ Agreed on 19 October 2026 from the prototypes on `proto-wide-layout` (`--demo --
 
 - An entry or a plan item opens in a **panel on the right**, beside the list (an inspector), not over it.
 - **Quick log** rises as a **drawer over the pane**, as now. Payday and Set Balance stay drawers too.
+  (Changed on 19 October: they are now cards in the middle of the window, over the rest of it blurred.)
 
 ## Goes away
 

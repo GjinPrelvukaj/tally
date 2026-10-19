@@ -42,7 +42,7 @@ import Foundation
 
     @Test func balanceAtEndOfDayIgnoresLaterEntries() {
         var ledger = Fixtures.oct19(main: main)
-        ledger.entries.append(Entry(date: Fixtures.date(2026, 10, 20, hour: 0), amount: .euros(10), kind: .spend, from: .main, category: .food))
+        ledger.entries.append(Entry(date: Fixtures.date(2026, 10, 20, hour: 0), amount: .euros(10), kind: .spend, from: .main, category: Category.food.id))
         #expect(ledger.balance(.main, endOf: Fixtures.date(2026, 10, 19)) == main)
         #expect(ledger.balance(.main, endOf: Fixtures.date(2026, 10, 20, hour: 9)) == .euros(140))
     }

@@ -1,20 +1,25 @@
 import Foundation
 
 /// An entry as edited: the amount stays text until it reads as money. A spend can also change what it was for,
-/// whether it went on the card, and its note. `entry` is nil until it can be saved.
+/// whether it went on the card, its note, and how the partner was part of it. `entry` is nil until it can be saved.
 struct EntryDraft {
     let original: Entry
     var amount: String
     var category: Category
-    var onCard: Bool
+    var method: PaymentMethod
     var note: String
+    var partner: PartnerShare?
+    var paysBack: Bool
 
-    init(_ entry: Entry) {
+    /// `ledger` names the entry's category (and knows its pot).
+    init(_ entry: Entry, ledger: Ledger) {
         original = entry
         amount = entry.amount.editable
-        category = entry.category ?? .other
-        onCard = entry.from == .card
+        category = ledger.category(entry.category) ?? .other
+        method = entry.method ?? (entry.from == .card ? .card : .bank)
         note = entry.note ?? ""
+        partner = entry.partner
+        paysBack = entry.owed != nil
     }
 
     var isSpend: Bool { original.kind == .spend }
@@ -26,10 +31,14 @@ struct EntryDraft {
         var entry = original
         entry.amount = cents
         if isSpend {
-            entry.category = category
-            entry.from = category.pot(onCard: onCard)
+            entry.category = category.id
+            entry.from = category.pot(paidWith: method)
+            entry.method = method
             let note = note.trimmingCharacters(in: .whitespacesAndNewlines)
             entry.note = note.isEmpty ? nil : note
+            entry.partner = partner
+            let theirs = partner?.theirs(of: cents) ?? .zero
+            entry.owed = paysBack && theirs > .zero ? theirs : nil
         }
         return entry
     }

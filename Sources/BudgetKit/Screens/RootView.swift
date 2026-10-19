@@ -2,11 +2,11 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// `--screen payday|log`: the drawer a demo opens on.
+/// `--screen payday|log`: the card a demo opens on.
 public enum OpenSheet: String, Sendable { case payday, log }
 
-/// The drawers that rise over the pane, apart from the payday one (which needs an income).
-enum Sheet: Hashable { case log, balance(Pot) }
+/// The cards that open in the middle of the window, apart from the payday one (which needs an income).
+enum Sheet: Hashable { case log, balance(Pot), paidBack }
 
 /// The window's content: the sidebar, and the chosen section in the pane beside it.
 /// Before the first run, the first run instead.
@@ -16,12 +16,16 @@ public struct RootView: View {
     @State private var section: Screen
     /// The one day every section reads; it changes when the calendar day does, never on a timer.
     @State private var day: Date
-    /// The income whose payday drawer is open.
+    /// The income whose payday card is open.
     @State private var payday: Due?
-    /// The quick log or set-balance drawer, when one is open.
+    /// The quick log, set-balance or paid-back card, when one is open.
     @State private var sheet: Sheet?
     /// The category Return logs under in the quick log: the one used last.
     @State private var lastCategory = Category.food
+    /// The partner's name from Settings; the demo has its own (`demoPartner`), so it never shows the real one.
+    @AppStorage(Preference.partnerName) private var savedPartner = ""
+    let demoPartner: String
+    private var partnerName: String { real ? savedPartner : demoPartner }
     /// "Undo" is on offer for a few seconds after something is recorded.
     @State private var undoShown = false
     @State private var undoHide: Task<Void, Never>?
@@ -37,13 +41,15 @@ public struct RootView: View {
     let showsSettings: Bool
     @Environment(\.openSettings) private var openSettings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
-    /// `sheet` opens that drawer at once (the payday one for the first income that is due, if one is).
+    /// `sheet` opens that card at once (the payday one for the first income that is due, if one is).
     /// `hidden` starts with every amount hidden (the setting, or the demo's `--hidden`).
     /// `real` is false in the demo; when true, Tally starts locked if the setting is on.
     public init(store: Store, today: @escaping () -> Date, screen: Screen = .today, sheet: OpenSheet? = nil,
-                hidden: Bool = false, real: Bool = false, showsSettings: Bool = false) {
+                hidden: Bool = false, real: Bool = false, showsSettings: Bool = false, demoPartner: String = "") {
         self.store = store
+        self.demoPartner = demoPartner
         self.today = today
         self.real = real
         self.showsSettings = showsSettings
@@ -55,7 +61,7 @@ public struct RootView: View {
         _sheet = State(initialValue: sheet == .log ? .log : nil)
     }
 
-    /// A drawer is open: the rest of the window takes no clicks.
+    /// A card is open: the rest of the window is blurred and takes no clicks.
     private var modal: Bool { payday != nil || sheet != nil }
 
     public var body: some View {
@@ -63,14 +69,21 @@ public struct RootView: View {
             if locked {
                 LockView { withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { locked = false } }
             } else if store.isSetUp {
-                HStack(spacing: 0) {
-                    Sidebar(store: store, today: day, section: section, go: go, log: { show(.log) })
-                        .allowsHitTesting(!modal)
-                    Rectangle().fill(.white.opacity(0.06)).frame(width: 1)
-                    pane
+                ZStack {
+                    HStack(spacing: 0) {
+                        Sidebar(store: store, today: day, section: section, go: go, log: { show(.log) })
+                        Rectangle().fill(.white.opacity(0.06)).frame(width: 1)
+                        pane
+                    }
+                    // Under Reduce Transparency a darker dim instead of the blur.
+                    .blur(radius: modal && !reduceTransparency ? 14 : 0)
+                    .allowsHitTesting(!modal)
+                    .accessibilityHidden(modal)
+                    modals
                 }
                 .redacted(reason: amountsHidden ? .privacy : [])
                 .environment(\.toggleAmounts, toggleAmounts)
+                .environment(\.partnerName, partnerName)
             } else {
                 FirstRunView(store: store, today: today()).frame(width: 380, height: 520)
             }
@@ -98,7 +111,6 @@ public struct RootView: View {
         VStack(spacing: 0) {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .accessibilityHidden(modal)
             if let problem { Text(problem).font(Living.caption).opacity(0.5).padding(.bottom, 10) }
         }
         .overlay(alignment: .bottom) {
@@ -106,12 +118,12 @@ public struct RootView: View {
                 UndoPill(undo: undo).padding(.bottom, Kit.Space.edge).transition(.opacity)
             }
         }
-        .overlay { drawers }
     }
 
     @ViewBuilder private var content: some View {
         switch section {
-        case .today: TodayView(store: store, today: day, now: today, onPayday: open, onSetOwed: { show(.balance(.card)) })
+        case .today: TodayView(store: store, today: day, now: today, onPayday: open, onSetOwed: { show(.balance(.card)) },
+                               onPaidBack: { show(.paidBack) })
         case .pots: PotsView(store: store, today: day, onPayday: open, onSetBalance: { show(.balance($0)) })
         case .month: MonthView(store: store, today: day)
         case .entries: EntriesPane(store: store, today: day)
@@ -128,20 +140,20 @@ public struct RootView: View {
                     Button(screen.title) { if !modal { go(screen) } }.keyboardShortcut(KeyEquivalent(screen.key))
                 }
                 Button("Hide Amounts") { toggleAmounts() }.keyboardShortcut("h", modifiers: [.command, .shift])
-                // Not while a drawer is open: there ⌘Z belongs to the text being typed.
+                // Not while a card is open: there ⌘Z belongs to the text being typed.
                 Button("Undo") { if !modal { undo() } }.keyboardShortcut("z")
             }
             .frame(width: 0, height: 0).opacity(0).accessibilityHidden(true)
         }
     }
 
-    /// The pane dimmed behind a drawer, which rises from its bottom; dimmed, it takes no clicks.
-    @ViewBuilder private var drawers: some View {
+    /// The window blurred and dimmed behind a card in its middle.
+    @ViewBuilder private var modals: some View {
         if modal {
-            UnevenRoundedRectangle(bottomTrailingRadius: 22, topTrailingRadius: 22, style: .continuous)
-                .fill(.black.opacity(0.6))
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.black.opacity(reduceTransparency ? 0.7 : 0.35))
                 .ignoresSafeArea()
-                // Clicking the dimmed space round a drawer closes it.
+                // Clicking anywhere round the card closes it.
                 .onTapGesture { close() }
                 .accessibilityHidden(true)
                 .transition(.opacity)
@@ -151,27 +163,32 @@ public struct RootView: View {
                                 add: { record(payday, amount: $0, split: $1) }, cancel: close)
                         .id(payday.id)
                 } else if let sheet {
-                    drawer(sheet).id(sheet)
+                    card(sheet).id(sheet)
                 }
             }
-            // As wide as a phone, not the pane: its rows stay close to their amounts.
+            // As wide as a phone, not the window: its rows stay close to their amounts.
             .frame(maxWidth: 440)
-            .padding(.top, 44)
-            .padding(.bottom, 12)
-            // The drawer and everything in it move as one piece, so nothing inside arrives before it.
+            .padding(.vertical, 24)
+            // The card and everything in it move as one piece, so nothing inside arrives before it.
             .geometryGroup()
-            .frame(maxHeight: .infinity, alignment: .bottom)
-            .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+            .transition(reduceMotion ? .opacity : .scale(scale: 0.96).combined(with: .opacity))
         }
     }
 
-    @ViewBuilder private func drawer(_ sheet: Sheet) -> some View {
+    @ViewBuilder private func card(_ sheet: Sheet) -> some View {
         switch sheet {
         case .log:
-            QuickLogSheet(last: lastCategory, log: log, cancel: close)
+            let ledger = store.ledger()
+            let offered = ledger.categories.filter { !$0.retired }
+            // The one used last, unless it has since been retired.
+            QuickLogSheet(categories: offered, last: offered.first { $0.id == lastCategory.id } ?? offered.first ?? .other,
+                          log: log, cancel: close)
         case .balance(let pot):
             SetBalanceSheet(pot: pot, balance: store.ledger().balance(pot),
                             set: { store.setBalance(pot, to: $0, at: today()); close() }, cancel: close)
+        case .paidBack:
+            PaidBackSheet(name: partnerName, owes: store.ledger().partnerOwes,
+                          add: { store.partnerPaidBack($0, at: today()); close() }, cancel: close)
         }
     }
 
@@ -196,7 +213,7 @@ public struct RootView: View {
         withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { payday = income }
     }
 
-    /// Only one drawer at a time, and none before the first run is done.
+    /// Only one card at a time, and none before the first run is done.
     private func show(_ next: Sheet) {
         guard store.isSetUp, !modal else { return }
         withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { sheet = next }
@@ -224,13 +241,14 @@ public struct RootView: View {
         withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.leave) { payday = nil; sheet = nil }
     }
 
-    private func log(_ amount: Cents, _ category: Category, _ note: String?, _ onCard: Bool) {
-        store.logSpend(amount, category: category, note: note, onCard: onCard, at: today())
-        lastCategory = category
+    private func log(_ spend: LoggedSpend) {
+        store.logSpend(spend.amount, category: spend.category, note: spend.note, paidWith: spend.method, at: today(),
+                       partner: spend.partner, paysBack: spend.paysBack)
+        lastCategory = spend.category
         close()
     }
 
-    /// Records it, then shows Pots under the leaving drawer, so the money is seen pouring into the tubes.
+    /// Records it, then shows Pots under the leaving card, so the money is seen pouring into the tubes.
     private func record(_ income: Due, amount: Cents, split: [UUID: Cents]) {
         store.payday(income, amount: amount, split: split, at: today())
         var still = Transaction()

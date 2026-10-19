@@ -11,6 +11,7 @@ struct EntriesPane: View {
     @State private var editing: EntryDraft?
     private let fade: CGFloat = 16
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.partnerName) private var partnerName
 
     var body: some View {
         let ledger = store.ledger()
@@ -21,7 +22,8 @@ struct EntriesPane: View {
             if let editing {
                 SidePanel(close: closeEditor) {
                     EntryEditor(draft: Binding { self.editing ?? editing } set: { self.editing = $0 },
-                                title: editing.original.title(plan: ledger.plan),
+                                title: editing.original.title(ledger: ledger),
+                                categories: ledger.categories.filter { !$0.retired || $0.id == editing.category.id },
                                 save: { store.update($0); closeEditor() },
                                 delete: { store.deleteEntry(editing.original.id); closeEditor() },
                                 cancel: closeEditor)
@@ -54,7 +56,7 @@ struct EntriesPane: View {
                     VStack(spacing: 0) {
                         ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                             if index > 0 { Rectangle().fill(.white.opacity(0.06)).frame(height: 1).padding(.leading, 12) }
-                            row(entry, plan: ledger.plan, calendar: ledger.calendar)
+                            row(entry, ledger: ledger)
                         }
                     }
                     .rowPanel()
@@ -89,14 +91,14 @@ struct EntriesPane: View {
     }
 
     /// What it was, the day and where the money went or came from, the amount. The one being edited is lit.
-    private func row(_ entry: Entry, plan: [PlanItem], calendar: Calendar) -> some View {
+    private func row(_ entry: Entry, ledger: Ledger) -> some View {
         Button {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { editing = EntryDraft(entry) }
+            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { editing = EntryDraft(entry, ledger: ledger) }
         } label: {
             HStack(spacing: Kit.Space.item) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(entry.title(plan: plan)).font(Kit.body).lineLimit(1)
-                    Text(entry.detail(calendar: calendar)).font(Kit.quiet).opacity(0.4).lineLimit(1)
+                    Text(entry.title(ledger: ledger)).font(Kit.body).lineLimit(1)
+                    Text(entry.detail(ledger: ledger, partner: partnerName)).font(Kit.quiet).opacity(0.4).lineLimit(1)
                 }
                 Spacer(minLength: Kit.Space.item)
                 Text(entry.shownAmount).font(Kit.body).monospacedDigit().privacySensitive()
@@ -112,23 +114,31 @@ struct EntriesPane: View {
 }
 
 extension Entry {
-    /// What it was: a spend's note or category, a plan item's name, or "Balance set".
-    func title(plan: [PlanItem]) -> String {
+    /// What it was: a spend's note or category, a plan item's name, "Paid back" or "Balance set".
+    func title(ledger: Ledger) -> String {
         switch kind {
-        case .spend: note ?? category?.title ?? "Spend"
+        case .spend: note ?? ledger.category(category)?.name ?? "Spend"
         case .adjustment: "Balance set"
-        default: plan.first { $0.id == planItem }?.name ?? kind.rawValue.capitalized
+        case .repayment: "Paid back"
+        default: ledger.plan.first { $0.id == planItem }?.name ?? kind.rawValue.capitalized
         }
     }
 
-    /// "the 19th · Food · Credit card".
-    func detail(calendar: Calendar) -> String {
-        let shownCategory = kind == .spend && note != nil ? category?.title : nil
-        let pot = kind == .income || kind == .adjustment ? to : from
-        return (["the \(ordinal(calendar.component(.day, from: date)))", shownCategory, pot?.title] as [String?])
+    /// "the 19th · Food · Credit card · with Ana" ("Cash" in place of the pot when paid in cash).
+    func detail(ledger: Ledger, partner: String) -> String {
+        let shownCategory = kind == .spend && note != nil ? ledger.category(category)?.name : nil
+        let pot = kind == .income || kind == .adjustment || kind == .repayment ? to : from
+        let paid = method == .cash ? "Cash" : pot?.title
+        let together: String? = switch self.partner {
+        case .with: "with \(partner)"
+        case .half: "half \(partner)'s"
+        case .forThem: "for \(partner)"
+        case nil: nil
+        }
+        return (["the \(ordinal(ledger.calendar.component(.day, from: date)))", shownCategory, paid, partner.isEmpty ? nil : together] as [String?])
             .compactMap { $0 }.joined(separator: " · ")
     }
 
     /// Money that came in shows "+"; a balance set by hand keeps its sign.
-    var shownAmount: String { kind == .income ? "+\(amount.formatted)" : amount.formatted }
+    var shownAmount: String { kind == .income || kind == .repayment ? "+\(amount.formatted)" : amount.formatted }
 }

@@ -8,6 +8,8 @@ public enum Preference {
     public static let amountsOnOpen = "amountsOnOpen"
     /// Whether amounts were hidden when Tally was last used, for "As I Left Them".
     public static let amountsHidden = "amountsHidden"
+    /// The partner's name; empty, nothing of the partner shows.
+    public static let partnerName = "partnerName"
     /// Before the choice there was one switch, "always start hidden".
     static let hideAmounts = "hideAmountsOnOpen"
 }

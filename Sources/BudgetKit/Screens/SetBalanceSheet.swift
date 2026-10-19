@@ -27,7 +27,7 @@ struct SetBalanceSheet: View {
                     .disabled(cents == nil)
             }
         }
-        .drawer(close: cancel, light: [pot.light, pot.light.opacity(0.5), pot.light])
+        .modal(close: cancel, light: [pot.light, pot.light.opacity(0.5), pot.light])
     }
 
     private func confirm() {

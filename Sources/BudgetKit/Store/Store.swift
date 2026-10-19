@@ -22,7 +22,7 @@ public final class Store {
 
     /// Kept for as long as the store lives: a context does not keep its container alive.
     @ObservationIgnored private let container: ModelContainer
-    @ObservationIgnored private let context: ModelContext
+    @ObservationIgnored let context: ModelContext
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var cached: (revision: Int, ledger: Ledger)?
 
@@ -38,6 +38,7 @@ public final class Store {
         container = try! Store.container(ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none))
         self.context = ModelContext(container)
         self.calendar = calendar
+        try! seedCategories()
     }
 
     public init(url: URL, calendar: Calendar = .current) throws {
@@ -47,6 +48,7 @@ public final class Store {
         self.context = ModelContext(container)
         self.calendar = calendar
         isSetUp = try settings() != nil
+        try seedCategories()
     }
 
     public convenience init(calendar: Calendar = .current) throws {
@@ -54,7 +56,15 @@ public final class Store {
     }
 
     private static func container(_ configuration: ModelConfiguration) throws -> ModelContainer {
-        try ModelContainer(for: PlanItemRecord.self, EntryRecord.self, SettingsRecord.self, configurations: configuration)
+        // Through the migration plan: a file saved by an older Tally is moved to the newest version as it opens.
+        try ModelContainer(for: Schema(versionedSchema: SchemaV2.self), migrationPlan: TallyMigration.self, configurations: configuration)
+    }
+
+    /// The five starter categories, in a store that has none yet: a new one, or one saved before categories were kept.
+    private func seedCategories() throws {
+        guard try context.fetchCount(FetchDescriptor<CategoryRecord>()) == 0 else { return }
+        for (order, category) in Category.starters.enumerated() { context.insert(CategoryRecord(category, order: order)) }
+        try context.save()
     }
 
     /// A snapshot of everything, for all the money logic. Cached until the next action.
@@ -77,8 +87,10 @@ public final class Store {
         let settings = try settings()
         let plan = try context.fetch(FetchDescriptor<PlanItemRecord>(sortBy: [SortDescriptor(\.order)]))
         let entries = try context.fetch(FetchDescriptor<EntryRecord>(sortBy: [SortDescriptor(\.date)]))
+        let categories = try context.fetch(FetchDescriptor<CategoryRecord>(sortBy: [SortDescriptor(\.order)]))
         return Ledger(start: settings?.balances ?? [:], startMonth: settings?.month ?? YearMonth(.now, calendar: calendar),
-                      plan: plan.map(\.value), entries: entries.map(\.value), calendar: calendar)
+                      plan: plan.map(\.value), entries: entries.map(\.value), calendar: calendar,
+                      categories: categories.map(\.value))
     }
 
     private func settings() throws -> SettingsRecord? {
@@ -86,7 +98,7 @@ public final class Store {
     }
 
     /// Runs a read; a failure is remembered in `loadError` and gives nil, a success clears it.
-    private func attempt<T>(_ read: () throws -> T) -> T? {
+    func attempt<T>(_ read: () throws -> T) -> T? {
         do {
             let value = try read()
             loadError = nil
@@ -98,7 +110,7 @@ public final class Store {
     }
 
     /// Saves and tells the screens something changed.
-    private func commit() {
+    func commit() {
         do {
             try context.save()
             saveError = nil
@@ -123,12 +135,21 @@ public final class Store {
         commit()
     }
 
-    /// A spend. On the card the debt grows; otherwise it comes out of the category's pot.
-    public func logSpend(_ amount: Cents, category: Category, note: String?, onCard: Bool, at date: Date) {
+    /// A spend. On the credit card the debt grows; by bank card or cash it comes out of the category's pot. With the partner, it
+    /// says how; `paysBack` adds their part to what they owe.
+    public func logSpend(_ amount: Cents, category: Category, note: String?, paidWith method: PaymentMethod, at date: Date,
+                         partner: PartnerShare? = nil, paysBack: Bool = false) {
         guard amount > .zero else { return }
         let note = note?.trimmingCharacters(in: .whitespacesAndNewlines)
-        add(Entry(date: date, amount: amount, kind: .spend, from: category.pot(onCard: onCard), category: category,
-                  note: note?.isEmpty == false ? note : nil))
+        let theirs = partner?.theirs(of: amount) ?? .zero
+        add(Entry(date: date, amount: amount, kind: .spend, from: category.pot(paidWith: method), category: category.id,
+                  note: note?.isEmpty == false ? note : nil, partner: partner, owed: paysBack && theirs > .zero ? theirs : nil, method: method))
+    }
+
+    /// The partner paid back: the money comes into `pot` and off what they owe.
+    public func partnerPaidBack(_ amount: Cents, into pot: Pot = .main, at date: Date) {
+        guard amount > .zero else { return }
+        add(Entry(date: date, amount: amount, kind: .repayment, to: pot))
     }
 
     /// Paid, at the amount actually paid. A transfer moves money `from` to `to`; a payment leaves `from`.
@@ -214,7 +235,7 @@ public final class Store {
         currentLedger()?.isDone(due.item.id, in: due.month) == false
     }
 
-    private func add(_ entry: Entry) { record([entry]) }
+    func add(_ entry: Entry) { record([entry]) }
 
     /// One action's entries, written and remembered for `undo`.
     private func record(_ entries: [Entry]) {

@@ -30,7 +30,7 @@
 2 150, card −45; this month's salary items already paid), today pinned to 19 Oct 2026 12:00; it never opens the file on disk.
 
 - `--screen today|pots|month|entries|plan`: the section it opens on; `--screen payday` is 1 November with the salary due and its
-  drawer open, `--screen log` Today with Quick log open, `--screen firstrun` a demo that
+  card open, `--screen log` Today with Quick log open, `--screen firstrun` a demo that
   has not been set up. Other values are ignored.
 - `--after-payday`: the salary added on 1 November with its planned split, today pinned there.
 - `--hidden`: every amount starts hidden. `--screen settings` opens the Settings window too (a second window: capture it by its
@@ -64,7 +64,7 @@ whole session. It only arrives while the demo is the active app, which a demo st
 ## Rules that are not negotiable
 
 - **Agents always run with `--demo`**, never on real data (`~/Library/Application Support/Budget/Budget.store`).
-- **Before any model change** (a field added to or removed from a SwiftData record) add a `VersionedSchema` with a migration,
+- **Before any model change** (a field added to or removed from a SwiftData record) add a `VersionedSchema` in `Store/Schema.swift` (freeze the old records as copies, as `SchemaV1` does) with a migration and a test that opens a file saved the old way (`MigrationTests`),
   and back up `Budget.store`, `Budget.store-wal` and `Budget.store-shm` first.
 
 - **Money is `Cents`, never `Double`.** Money logic lives only in `Sources/BudgetKit/Money/`.
@@ -91,7 +91,7 @@ whole session. It only arrives while the demo is the active app, which a demo st
 
 ## Style
 
-- **Looks live in `Design/Kit.swift`.** Screens use its fonts (`Kit.body`, `Kit.quiet`, `Kit.title`, `Kit.amount`), buttons (`.primary`, `.secondary`, `.quiet`, `.chip`), `.toggleStyle(.glass)`, `.eyebrow()` and `.groupLabel()`. No inline font sizes, fills or stock switches in a screen; change the kit instead. Gaps come from `Kit.Space` (label 6, item 8, group 16, edge 20); fields come in `Kit.field`, `Kit.rowAmount` and `Kit.largeField` widths only. Any amount drawn on screen is `.privacySensitive()` (a big one `.bigAmount()`); a `GlassField` holding a name or note passes `secret: false`. Sheets are `AmountField` + content + `SheetFooter`, wrapped in `.drawer(close:)`. A section's content uses `.pane()`; an editor beside a list sits in `SidePanel`; lists of rows use `.rowPanel()`.
+- **Looks live in `Design/Kit.swift`.** Screens use its fonts (`Kit.body`, `Kit.quiet`, `Kit.title`, `Kit.amount`), buttons (`.primary`, `.secondary`, `.quiet`, `.chip`), `.toggleStyle(.glass)`, `.eyebrow()` and `.groupLabel()`. No inline font sizes, fills or stock switches in a screen; change the kit instead. Gaps come from `Kit.Space` (label 6, item 8, group 16, edge 20); fields come in `Kit.field`, `Kit.rowAmount` and `Kit.largeField` widths only. Any amount drawn on screen is `.privacySensitive()` (a big one `.bigAmount()`); a `GlassField` holding a name or note passes `secret: false`. Sheets are `AmountField` + content + `SheetFooter`, wrapped in `.modal(close:)`. A section's content uses `.pane()`; an editor beside a list sits in `SidePanel`; lists of rows use `.rowPanel()`; a choice of a few is a `GlassSegments` bar (or `.chip` buttons where many).
 - **No lazy stacks or grids inside a sheet:** their items are made after the sheet starts rising and pop in before it arrives. The sheet container has `.geometryGroup()` so it moves as one piece.
 - The icon: edit `Scripts/make-icon.swift`, run `Scripts/make-icon.sh`, commit `Resources/AppIcon.icns`.
 

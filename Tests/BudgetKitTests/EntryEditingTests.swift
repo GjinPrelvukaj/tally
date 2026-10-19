@@ -18,9 +18,9 @@ import Foundation
 
     @Test func aSpendLoggedOnTheWrongPotCanBeMovedToTheCard() throws {
         let store = store()
-        store.logSpend(Cents(340), category: .other, note: nil, onCard: false, at: oct19)
-        var draft = EntryDraft(try lastSpend(store))
-        draft.onCard = true
+        store.logSpend(Cents(340), category: .other, note: nil, paidWith: .bank, at: oct19)
+        var draft = EntryDraft(try lastSpend(store), ledger: store.ledger())
+        draft.method = .card
         store.update(try #require(draft.entry))
         #expect(store.ledger().balance(.main) == Cents(15000))
         #expect(store.ledger().balance(.card) == Cents(-6680))
@@ -28,8 +28,8 @@ import Foundation
 
     @Test func aSpendsAmountCanBeChanged() throws {
         let store = store()
-        store.logSpend(Cents(510), category: .food, note: "coffee", onCard: false, at: oct19)
-        var draft = EntryDraft(try lastSpend(store))
+        store.logSpend(Cents(510), category: .food, note: "coffee", paidWith: .bank, at: oct19)
+        var draft = EntryDraft(try lastSpend(store), ledger: store.ledger())
         draft.amount = "5"
         store.update(try #require(draft.entry))
         let spend = try lastSpend(store)
@@ -41,8 +41,8 @@ import Foundation
 
     @Test func aCategoryOfClothesMovesTheSpendToTheClothesPot() throws {
         let store = store()
-        store.logSpend(Cents(2000), category: .food, note: nil, onCard: false, at: oct19)
-        var draft = EntryDraft(try lastSpend(store))
+        store.logSpend(Cents(2000), category: .food, note: nil, paidWith: .bank, at: oct19)
+        var draft = EntryDraft(try lastSpend(store), ledger: store.ledger())
         draft.category = .clothes
         store.update(try #require(draft.entry))
         #expect(store.ledger().balance(.main) == Cents(15000))
@@ -51,8 +51,8 @@ import Foundation
 
     @Test func zeroOrTextIsNeverSaved() throws {
         let store = store()
-        store.logSpend(Cents(510), category: .food, note: nil, onCard: false, at: oct19)
-        var draft = EntryDraft(try lastSpend(store))
+        store.logSpend(Cents(510), category: .food, note: nil, paidWith: .bank, at: oct19)
+        var draft = EntryDraft(try lastSpend(store), ledger: store.ledger())
         draft.amount = "0"
         #expect(draft.entry == nil)
         draft.amount = "abc"
@@ -73,9 +73,9 @@ import Foundation
 
     @Test func theMonthsEntriesAreTheOnesThatMovedMoneyNewestFirst() throws {
         let store = store()
-        store.logSpend(Cents(510), category: .food, note: nil, onCard: false, at: oct19)
-        store.logSpend(Cents(340), category: .other, note: nil, onCard: true, at: Fixtures.date(2026, 10, 19, hour: 18))
-        store.logSpend(Cents(900), category: .food, note: nil, onCard: false, at: Fixtures.date(2026, 11, 2))
+        store.logSpend(Cents(510), category: .food, note: nil, paidWith: .bank, at: oct19)
+        store.logSpend(Cents(340), category: .other, note: nil, paidWith: .card, at: Fixtures.date(2026, 10, 19, hour: 18))
+        store.logSpend(Cents(900), category: .food, note: nil, paidWith: .bank, at: Fixtures.date(2026, 11, 2))
         let october = store.ledger().entries(in: YearMonth(2026, 10))
         // "Paid before you started" moved no money, so it is not listed.
         #expect(october.map(\.amount) == [Cents(340), Cents(510)])

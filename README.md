@@ -27,7 +27,7 @@ today, what's still to pay this month, and when your emergency fund will be full
   arrives". Unpaid items carry over to the next month instead of quietly disappearing.
 - **Log a spend** in a couple of seconds (⌘N): an amount, a category, done. ⌘Z undoes the last thing you recorded.
 
-A sidebar takes you between Today, Pots, Month, your entries and the plan (⌘1–⌘5). An entry or a plan item opens beside its list; Log a Spend and payday rise as a drawer you drag down or click away.
+A sidebar takes you between Today, Pots, Month, your entries and the plan (⌘1–⌘5). An entry or a plan item opens beside its list; Log a Spend and payday open as a card in the middle, over the blurred window; pull it down or click away to close it.
 
 ## Private by design
 

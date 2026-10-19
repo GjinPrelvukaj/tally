@@ -52,7 +52,7 @@ import Foundation
     @Test func spendOnClothesComesFromClothesPot() throws {
         let store = firstRun()
         try payday(store)
-        store.logSpend(Cents(6000), category: .fragrance, note: nil, onCard: false, at: oct20)
+        store.logSpend(Cents(6000), category: .fragrance, note: nil, paidWith: .bank, at: oct20)
         let ledger = store.ledger()
         #expect(ledger.balance(.clothes) == Cents(2000))
         #expect(ledger.balance(.main) == Cents(53660))
@@ -61,14 +61,14 @@ import Foundation
     @Test func aLoggedSpendLowersWhatHeCanSpendEachDay() throws {
         let store = firstRun()
         let before = try #require(store.ledger().allowance(today: oct19)).perDay
-        store.logSpend(.euros(20), category: .food, note: nil, onCard: false, at: oct19)
+        store.logSpend(.euros(20), category: .food, note: nil, paidWith: .bank, at: oct19)
         let after = try #require(store.ledger().allowance(today: oct19)).perDay
         #expect(after < before)
     }
 
     @Test func spendOnCardGrowsDebt() {
         let store = firstRun()
-        store.logSpend(Cents(2000), category: .food, note: " lunch ", onCard: true, at: oct19)
+        store.logSpend(Cents(2000), category: .food, note: " lunch ", paidWith: .card, at: oct19)
         #expect(store.ledger().balance(.card) == Cents(-8340))
         #expect(store.ledger().balance(.main) == Cents(15000))
         #expect(store.ledger().entries.last?.note == "lunch")
@@ -207,7 +207,7 @@ import Foundation
     @Test func revisionGoesUpWithEveryAction() {
         let store = firstRun()
         let before = store.revision
-        store.logSpend(Cents(100), category: .other, note: nil, onCard: false, at: oct19)
+        store.logSpend(Cents(100), category: .other, note: nil, paidWith: .bank, at: oct19)
         #expect(store.revision > before)
     }
 
@@ -219,7 +219,7 @@ import Foundation
         do {
             let store = try Store(url: url, calendar: Fixtures.calendar)
             store.setUpExample(balances: [.main: Cents(15000)], paid: Example.paidInOctober, today: oct19)
-            store.logSpend(Cents(1000), category: .food, note: nil, onCard: false, at: oct19)
+            store.logSpend(Cents(1000), category: .food, note: nil, paidWith: .bank, at: oct19)
         }
         let reopened = try Store(url: url, calendar: Fixtures.calendar)
         #expect(reopened.isSetUp)
@@ -281,7 +281,7 @@ import Foundation
 
     @Test func undoingASpendDismissAndBalanceChange() throws {
         let store = firstRun()
-        store.logSpend(.euros(20), category: .food, note: nil, onCard: false, at: oct19)
+        store.logSpend(.euros(20), category: .food, note: nil, paidWith: .bank, at: oct19)
         store.undo()
         #expect(store.ledger().balance(.main) == Cents(15000))
         let due = try #require(store.ledger().stillToPay(today: oct19).first { $0.item.id == Example.ID.gym })
@@ -295,8 +295,8 @@ import Foundation
 
     @Test func onlyTheLastActionIsUndoneAndOnlyOnce() {
         let store = firstRun()
-        store.logSpend(.euros(10), category: .food, note: nil, onCard: false, at: oct19)
-        store.logSpend(.euros(5), category: .food, note: nil, onCard: false, at: oct19)
+        store.logSpend(.euros(10), category: .food, note: nil, paidWith: .bank, at: oct19)
+        store.logSpend(.euros(5), category: .food, note: nil, paidWith: .bank, at: oct19)
         store.undo()
         #expect(store.ledger().balance(.main) == Cents(14000))
         store.undo()
@@ -316,7 +316,7 @@ import Foundation
         let store = firstRun()
         let due = try #require(store.ledger().stillToPay(today: oct19).first { $0.item.id == Example.ID.gym })
         store.markPaid(due, amount: .zero, at: oct19)
-        store.logSpend(.zero, category: .food, note: nil, onCard: false, at: oct19)
+        store.logSpend(.zero, category: .food, note: nil, paidWith: .bank, at: oct19)
         #expect(store.ledger().isDone(Example.ID.gym, in: Example.october) == false)
         #expect(store.ledger().entries.count == Example.paidInOctober.count)
     }
