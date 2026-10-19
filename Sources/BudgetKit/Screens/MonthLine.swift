@@ -80,7 +80,9 @@ struct MonthLine: View {
         let at = frame.point(point)
         ctx.stroke(Path { $0.move(to: CGPoint(x: at.x, y: 14)); $0.addLine(to: at) }, with: .color(.white.opacity(0.15)), lineWidth: 1)
         dot(&ctx, at, radius: 3, color: .white)
-        let words = hidden ? ordinal(point.day) : "\(ordinal(point.day)) · \(point.balance.formatted)"
+        // The day before the first run reads as what was there to start with.
+        let day = point.opening ? "Started with" : ordinal(point.day)
+        let words = hidden ? day : "\(day) · \(point.balance.formatted)"
         let text = ctx.resolve(Text(words).font(Living.caption).monospacedDigit()
             .foregroundStyle(.white.opacity(0.85)))
         let half = text.measure(in: frame.size).width / 2

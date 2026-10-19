@@ -140,7 +140,7 @@ Sources/BudgetKit/Screens/MonthView.swift  Month: "MAIN ACCOUNT", "‹ October 2
                                       each page the lowest point ("lowest point · the 19th" / "today"), the line, and left at end of month,
                                       saved ("Saved this month" on the current month, "Saved" on past ones), and on the current month only the emergency fund's goal month
 Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's days as faint dots along zero, solid and lit where it happened,
-                                      dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out (none before the line starts)
+                                      dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out (none before the line starts; its first point, the day before the first run, reads "Started with")
 Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid);
                                       while amounts are hidden an amount field shows a bar until clicked or typed into (`secret: false` for a name or note)
 Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, the category chips (three a row, retired ones left out; a tap only chooses, the one used last to begin with), Bank Card /
@@ -195,8 +195,8 @@ persists; the file is `~/Library/Application Support/Budget/Budget.store`), `Des
   included) divided down (floor) over `max(1, days from today to the income)`. It can be negative and is never hidden.
 - **Goal month** (`Ledger.goalMonth`): balance plus this month's undone planned transfers into the pot; if that
   reaches the goal it is this month, else each later month's planned transfers are added, up to 120 months, else nil.
-- **Month line** (`Ledger.monthLine`): it starts on the first-run day (the earliest entry's day, or the start month's 1st
-  with no entries), so it never makes up a balance from before the first run; months before the start month are empty. Past months come from entries, today's month is entries up to yesterday,
+- **Month line** (`Ledger.monthLine`): it starts the day before the first-run day (the earliest entry's day, or the start month's 1st
+  with no entries), at the balance typed then (`opening`, not counted as the lowest point), so the first day's spending shows and it never makes up a balance from further back; months before the start month are empty. Past months come from entries, today's month is entries up to yesterday,
   today's real balance, then a projection (every held-back due the allowance counts out of Main, on its day if it is dated and still ahead this month, else on the first projected day, the
   daily-life amount out every day, an undone income in on its day or on the first projected day if it is late,
   with its undone split out of Main). Later months are empty. See "How the numbers work" in the design.

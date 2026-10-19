@@ -8,8 +8,8 @@ public struct LinePayday: Sendable, Equatable {
 }
 
 extension [LinePoint] {
-    /// The lowest balance on the line, on the first day it is reached.
-    public var lowest: LinePoint? { self.min { $0.balance < $1.balance } }
+    /// The lowest balance on the line, on the first day it is reached; the day before the first run isn't one of them.
+    public var lowest: LinePoint? { filter { !$0.opening }.min { $0.balance < $1.balance } }
 }
 
 extension Ledger {

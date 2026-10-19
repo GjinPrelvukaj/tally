@@ -5,16 +5,25 @@ public struct LinePoint: Sendable, Equatable {
     public var day: Int
     public var balance: Cents
     public var projected: Bool
+    /// The day before the first run: the balance typed then. Drawn, but not one of Tally's own days (not the lowest point).
+    public var opening = false
 }
 
 extension Ledger {
     /// Main at the end of each day of the month: what happened, then today, then a plan-based guess.
-    /// The line starts on the first-run day, so it never makes up a balance from before the first run;
-    /// months after this one have no line yet.
+    /// The line starts the day before the first run, at the balance typed then (what Main held as that day began), so
+    /// the first day's own spending shows; it never makes up a balance from further back. Months after this one have no line yet.
     public func monthLine(_ month: YearMonth, today: Date) -> [LinePoint] {
         guard month >= startMonth else { return [] }
         let firstRun = calendar.startOfDay(for: entries.map(\.date).min() ?? startMonth.date(day: 1, calendar: calendar))
-        return wholeMonthLine(month, today: today).filter { month.date(day: $0.day, calendar: calendar) >= firstRun }
+        let opening = calendar.date(byAdding: .day, value: -1, to: firstRun) ?? firstRun
+        return wholeMonthLine(month, today: today).compactMap { point in
+            let date = month.date(day: point.day, calendar: calendar)
+            guard date >= opening else { return nil }
+            var point = point
+            point.opening = date < firstRun
+            return point
+        }
     }
 
     private func wholeMonthLine(_ month: YearMonth, today: Date) -> [LinePoint] {

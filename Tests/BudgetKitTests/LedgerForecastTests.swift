@@ -80,16 +80,18 @@ import Foundation
 
     @Test func monthLineProjects() throws {
         let line = ledger.monthLine(Fixtures.october, today: today)
-        #expect(line.count == 13)
+        #expect(line.count == 14)
         #expect(on(19, line) == LinePoint(day: 19, balance: .euros(150), projected: false))
         #expect(on(20, line) == LinePoint(day: 20, balance: Cents(46660), projected: true))
         #expect(on(21, line) == LinePoint(day: 21, balance: Cents(44160), projected: true))
         #expect(line.last?.projected == true)
     }
 
-    @Test func monthLineStartsOnTheFirstRunDay() {
+    @Test func monthLineStartsTheDayBeforeTheFirstRunAtTheTypedBalance() {
         let line = ledger.monthLine(Fixtures.october, today: today)
-        #expect(line.first?.day == 19)
+        // What was typed at the first run is what Main held as that day began.
+        #expect(line.first == LinePoint(day: 18, balance: ledger.start[.main] ?? .zero, projected: false, opening: true))
+        #expect(line.dropFirst().allSatisfy { !$0.opening })
         #expect(ledger.monthLine(YearMonth(2026, 9), today: today).isEmpty)
     }
 
@@ -118,7 +120,7 @@ import Foundation
         let l = Fixtures.afterSideJob()
         let november = Fixtures.date(2026, 11, 5)
         let line = l.monthLine(Fixtures.october, today: november)
-        #expect(line.count == 13)
+        #expect(line.count == 14)
         #expect(line.allSatisfy { !$0.projected })
         #expect(on(19, line)?.balance == .euros(150))
         #expect(on(20, line)?.balance == Cents(53660))
