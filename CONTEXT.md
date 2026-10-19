@@ -36,8 +36,9 @@ clicking into a hidden amount field to show it.
 ```
 Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|insights|entries|plan|people|settings`: that section; `payday`, `log`: Today with that card open; `firstrun`: a demo not yet set up)
 Sources/BudgetKit/Money/Cents.swift   money in whole cents: formatting (`formatted`, `wholeEuros` "2 000", `editable` "2 450,17" for a field), parsing, floor division
-Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027")
-Sources/BudgetKit/Money/Model.swift   Pot, Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)`); a spend names its category by key;
+Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027", `monthsSince`)
+Sources/BudgetKit/Money/Model.swift   Pot, Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)` and `perMonth`); a plan item comes every
+                                      `repeatEvery` months (1 every month, 12 every year) from `startsIn` (nil: always), or once (`onlyIn`); a spend names its category by key;
                                       `PaymentMethod` (bank, card, cash: the credit card adds to its debt, the others come out of the category's pot)
 Sources/BudgetKit/Money/Category.swift  `Category`: key, name, pot, retired; the five `starters` keep the keys they always had (`food`…)
 Sources/BudgetKit/Money/Insight.swift  `Insight` (kind, level: warning / notice / good, title, detail), `Ledger.insights(today:partnerName:)` warnings first,
@@ -58,12 +59,15 @@ Sources/BudgetKit/Money/Ledger+Due.swift  `Due`, `isDone`, `stillToPay(today:)`:
 Sources/BudgetKit/Money/Ledger+Forecast.swift  `nextIncome`, `allowance`, `goalMonth`, `paydays`: what can be spent a day, when the emergency fund is full, which days are paydays
 Sources/BudgetKit/Money/Ledger+MonthLine.swift  `monthLine`: Main at the end of each day from the first-run day, past from entries, the rest projected from the plan
 Sources/BudgetKit/Money/Ledger+MonthNumbers.swift  for Month: the line's `lowest` point, `saved(in:)`, `linePaydays` (arrived and expected incomes on the line), `ordinal` ("19th")
+Sources/BudgetKit/Money/PlanSummary.swift  `Ledger.planSummary(for:)`: what the plan comes to in a month (comes in, to savings, goes out, every day ×
+                                      its days, left over), counting only what is due that month
 Sources/BudgetKit/Money/PlanGroup.swift  the plan's four headings (Comes in / Goes to savings / Goes out / Every day) and `PlanItem.group`; paying off the card counts as going out
 Sources/BudgetKit/Money/Tubes.swift   the sums behind Pots' tubes: `held` (the card as what's owed), the shared `scale` (largest held amount or goal), `level`
 Sources/BudgetKit/Money/Payday.swift  `Payday.leftInMain`: the income less everything paid out of it
 Sources/BudgetKit/Store/Records.swift  SwiftData records (plan item, entry, settings, category) with their conversion to and from the plain values
 Sources/BudgetKit/Store/Schema.swift  `SchemaV1` (frozen copies of the records before versions), `SchemaV2` (+ `CategoryRecord`, `EntryRecord.partner`, `owed`, `method`;
-                                      frozen copies), `SchemaV3` (+ `EntryRecord.person`), `TallyMigration` (lightweight V1 → V2 → V3); the container opens through it
+                                      frozen copies), `SchemaV3` (+ `EntryRecord.person`; frozen), `SchemaV4` (+ `PlanItemRecord.repeatEvery`, `startsInYear`,
+                                      `startsInMonth`), `TallyMigration` (lightweight V1 → V2 → V3 → V4); the container opens through it
 Sources/BudgetKit/Store/Store.swift   `Store`: opens the database (seeds the five categories into a store without any), `ledger()` snapshot, `revision`, and every action the screens call;
 Sources/BudgetKit/Store/Store.swift (people)  `record(_ kind:_:with:pot:before:at:)`: lent / paid back go out of Main, repayment / borrowed come in;
                                       `before` (owed from before Tally) moves no money
@@ -144,9 +148,12 @@ Sources/BudgetKit/Screens/EntriesPane.swift  Entries: a month's entries newest f
                                       in a `SidePanel` on the right; `Entry.title`, `detail`, `shownAmount` say a row
 Sources/BudgetKit/Screens/EntryEditor.swift  one entry: a spend's amount, how it was paid (bank, card or cash), the partner, note and category; a payment's, income's or repayment's amount; Delete
                                       (a paid plan item is due again); a balance set by hand can only be deleted. `EntryDraft.swift` holds its typed values
-Sources/BudgetKit/Screens/PlanPane.swift  Plan: the plan under "Comes in / Goes to savings / Goes out / Every day" (`PlanGroup`); a row opens `PlanItemEditor` in a `SidePanel`
+Sources/BudgetKit/Screens/PlanPane.swift  Plan: Add Item; "In October" (the month's summary, four across or two by two, and Left over); each group on a card
+                                      (symbol, total due this month), items by day on two lines (name and amount; when, how often, from where; "≈ 1,25 € a month"
+                                      for a rarer one); a row opens `PlanItemEditor` in a `SidePanel`
                                       (`PlanItemDraft` holds the typed values); Delete keeps the item's past payments
-Sources/BudgetKit/Screens/PlanItemEditor.swift  the editor for one plan item (opened from the Plan); `PlanItemDraft.swift` holds its typed values
+Sources/BudgetKit/Screens/PlanItemEditor.swift  the editor for one plan item (opened from the Plan): Repeats (every month, every 2, 3 or 6 months, every
+                                      year, once) and Starting / In; `PlanItemDraft.swift` holds its typed values; a new item starts in the month it is added
 Sources/BudgetKit/Screens/SetBalanceSheet.swift  right-click a tube on Pots, "Set Balance…": the card asks what is owed; the difference is an adjustment
 Sources/BudgetKit/Screens/FirstRunView.swift  one question per pot ("What's in Main right now?", the card "How much do you owe on the card?"), then this month's
                                       items to tick as already paid (nothing pre-ticked)

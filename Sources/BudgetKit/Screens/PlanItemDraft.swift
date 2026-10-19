@@ -3,6 +3,8 @@ import Foundation
 /// A plan item as edited: the amount stays text until it reads as money. `item` is nil until it can be saved.
 struct PlanItemDraft {
     enum When: CaseIterable { case day, window, anyDay, withIncome }
+    /// How often: every month, every few months or every year from `repeatMonth`, or once in it.
+    enum Repeats: Hashable { case everyMonth, every(Int), once }
 
     var id: UUID
     var name: String
@@ -16,7 +18,11 @@ struct PlanItemDraft {
     var windowFrom = 1
     var windowTo = 28
     var income: UUID?
-    var onlyIn: YearMonth?
+    var repeats: Repeats
+    /// The month it starts in (every few months, every year) or happens in (once).
+    var repeatMonth: YearMonth
+    /// When it repeats every month: the month it began (nil: always), kept as it was.
+    var startsIn: YearMonth?
     var paused: Bool
 
     init(_ item: PlanItem) {
@@ -26,8 +32,10 @@ struct PlanItemDraft {
         kind = item.kind
         from = item.from
         to = item.to
-        onlyIn = item.onlyIn
         paused = item.paused
+        startsIn = item.startsIn
+        repeats = item.onlyIn != nil ? .once : item.repeatEvery > 1 ? .every(item.repeatEvery) : .everyMonth
+        repeatMonth = item.onlyIn ?? item.startsIn ?? YearMonth(.now, calendar: .current)
         switch item.schedule {
         case .day(let d): when = .day; day = d
         case .window(let a, let b): when = .window; windowFrom = a; windowTo = b
@@ -36,10 +44,11 @@ struct PlanItemDraft {
         }
     }
 
-    /// A new one: something paid, on any day.
-    init() {
-        self.init(PlanItem(name: "", amount: .zero, kind: .payment, from: .main, schedule: .anyDay))
+    /// A new one: something paid, on any day, every month from `month` (so it is never owed for months before it).
+    init(startingIn month: YearMonth) {
+        self.init(PlanItem(name: "", amount: .zero, kind: .payment, from: .main, schedule: .anyDay, startsIn: month))
         amount = ""
+        repeatMonth = month
     }
 
     private static func pots(for kind: PlanKind) -> (from: Pot?, to: Pot?) {
@@ -65,7 +74,13 @@ struct PlanItemDraft {
     var item: PlanItem? {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, let cents = amountCents, let schedule, from != to || kind == .income else { return nil }
-        return PlanItem(id: id, name: name, amount: cents, kind: kind, from: from, to: to, schedule: schedule,
-                        onlyIn: onlyIn, paused: paused)
+        return switch repeats {
+        case .everyMonth: PlanItem(id: id, name: name, amount: cents, kind: kind, from: from, to: to, schedule: schedule,
+                                   paused: paused, startsIn: startsIn)
+        case .every(let months): PlanItem(id: id, name: name, amount: cents, kind: kind, from: from, to: to, schedule: schedule,
+                                          paused: paused, repeatEvery: months, startsIn: repeatMonth)
+        case .once: PlanItem(id: id, name: name, amount: cents, kind: kind, from: from, to: to, schedule: schedule,
+                             onlyIn: repeatMonth, paused: paused)
+        }
     }
 }

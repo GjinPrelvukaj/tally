@@ -57,7 +57,7 @@ public final class Store {
 
     private static func container(_ configuration: ModelConfiguration) throws -> ModelContainer {
         // Through the migration plan: a file saved by an older Tally is moved to the newest version as it opens.
-        try ModelContainer(for: Schema(versionedSchema: SchemaV3.self), migrationPlan: TallyMigration.self, configurations: configuration)
+        try ModelContainer(for: Schema(versionedSchema: SchemaV4.self), migrationPlan: TallyMigration.self, configurations: configuration)
     }
 
     /// The five starter categories, in a store that has none yet: a new one, or one saved before categories were kept.

@@ -131,17 +131,56 @@ enum SchemaV2: VersionedSchema {
     }
 }
 
-/// Who money is open with, on an entry (`EntryRecord.person`).
+/// Who money is open with, on an entry (`EntryRecord.person`). A frozen copy of the entry; the rest as before.
 enum SchemaV3: VersionedSchema {
     static let versionIdentifier = Schema.Version(3, 0, 0)
+    static var models: [any PersistentModel.Type] {
+        [SchemaV1.PlanItemRecord.self, EntryRecord.self, SchemaV1.SettingsRecord.self, SchemaV2.CategoryRecord.self]
+    }
+
+    @Model final class EntryRecord {
+        @Attribute(.unique) var id: UUID
+        var date: Date
+        var amount: Int
+        var kind: String
+        var from: String?
+        var to: String?
+        var category: String?
+        var note: String?
+        var planItem: UUID?
+        var forYear: Int?
+        var forMonth: Int?
+        var movesMoney: Bool
+        var partner: String?
+        var owed: Int?
+        var method: String?
+        var person: String?
+
+        init(id: UUID, date: Date, amount: Int, kind: String, from: String?, to: String?, movesMoney: Bool, person: String?) {
+            self.id = id
+            self.date = date
+            self.amount = amount
+            self.kind = kind
+            self.from = from
+            self.to = to
+            self.movesMoney = movesMoney
+            self.person = person
+        }
+    }
+}
+
+/// How often a plan item comes (`PlanItemRecord.repeatEvery`, `startsInYear`, `startsInMonth`).
+enum SchemaV4: VersionedSchema {
+    static let versionIdentifier = Schema.Version(4, 0, 0)
     static var models: [any PersistentModel.Type] { [PlanItemRecord.self, EntryRecord.self, SettingsRecord.self, CategoryRecord.self] }
 }
 
 /// Only things added, nothing renamed or removed, so SwiftData moves the file itself, a version at a time.
 enum TallyMigration: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self, SchemaV3.self] }
+    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self] }
     static var stages: [MigrationStage] {
         [.lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self),
-         .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self)]
+         .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self),
+         .lightweight(fromVersion: SchemaV3.self, toVersion: SchemaV4.self)]
     }
 }

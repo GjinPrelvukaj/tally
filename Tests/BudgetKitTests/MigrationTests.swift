@@ -65,3 +65,34 @@ import SwiftData
         #expect(ledger.categories.map(\.id) == ["food"])
     }
 }
+
+/// A file saved with people (`SchemaV3`) opens with its plan every month, as before, and its people.
+@MainActor @Suite struct MigrationV3Tests {
+    @Test func aFileWithPeopleOpensWithItsPlanEveryMonth() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "tally-migration-\(UUID().uuidString)")
+        let url = folder.appending(path: "Budget.store")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        let gym = UUID()
+        do {
+            let old = try ModelContainer(for: Schema(versionedSchema: SchemaV3.self), migrationPlan: nil,
+                                         configurations: ModelConfiguration(url: url, cloudKitDatabase: .none))
+            let context = ModelContext(old)
+            context.insert(SchemaV1.SettingsRecord(startBalances: Data(#"{"main":15000}"#.utf8), startYear: 2026, startMonth: 10,
+                                                   goals: Data("{}".utf8)))
+            context.insert(SchemaV1.PlanItemRecord(id: gym, order: 0, name: "Gym", amount: 3500, kind: "payment",
+                                                   schedule: Data(#"{"anyDay":{}}"#.utf8), paused: false))
+            context.insert(SchemaV3.EntryRecord(id: UUID(), date: Fixtures.date(2026, 10, 19), amount: 5000, kind: "lent",
+                                                from: "main", to: nil, movesMoney: false, person: "Ben"))
+            try context.save()
+        }
+
+        let store = try Store(url: url, calendar: Fixtures.calendar)
+        let ledger = store.ledger()
+        let item = try #require(ledger.plan.first { $0.id == gym })
+        #expect(item.repeatEvery == 1 && item.startsIn == nil)
+        #expect(item.applies(in: YearMonth(2026, 10)))
+        #expect(ledger.owes("Ben") == Cents(5000))
+    }
+}
