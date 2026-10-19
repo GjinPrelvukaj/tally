@@ -31,9 +31,9 @@ import Foundation
 
 @Suite struct ScreenTests {
     @Test func sixSectionsInTheSidebarsOrder() {
-        #expect(Screen.allCases == [.today, .pots, .month, .insights, .entries, .plan])
-        // ⌘1 to ⌘6.
-        #expect(Screen.allCases.map(\.key) == ["1", "2", "3", "4", "5", "6"])
+        #expect(Screen.allCases == [.today, .pots, .month, .insights, .entries, .plan, .settings])
+        // ⌘1 to ⌘6, and Settings ⌘,.
+        #expect(Screen.allCases.map(\.key) == ["1", "2", "3", "4", "5", "6", ","])
     }
 
     @Test func namedFromTheCommandLine() {
@@ -42,6 +42,7 @@ import Foundation
         #expect(Screen(named: "entries") == .entries)
         #expect(Screen(named: "plan") == .plan)
         #expect(Screen(named: "insights") == .insights)
+        #expect(Screen(named: "settings") == .settings)
         #expect(Screen(named: "payday") == nil)
     }
 

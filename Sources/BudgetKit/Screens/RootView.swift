@@ -37,9 +37,6 @@ public struct RootView: View {
     @AppStorage(Preference.lock) private var lockOn = false
     /// Nothing of the money is drawn until Touch ID says it is you.
     @State private var locked: Bool
-    /// `--screen settings` in the demo: the Settings window opens too, for a picture.
-    let showsSettings: Bool
-    @Environment(\.openSettings) private var openSettings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
@@ -47,12 +44,11 @@ public struct RootView: View {
     /// `hidden` starts with every amount hidden (the setting, or the demo's `--hidden`).
     /// `real` is false in the demo; when true, Tally starts locked if the setting is on.
     public init(store: Store, today: @escaping () -> Date, screen: Screen = .today, sheet: OpenSheet? = nil,
-                hidden: Bool = false, real: Bool = false, showsSettings: Bool = false, demoPartner: String = "") {
+                hidden: Bool = false, real: Bool = false, demoPartner: String = "") {
         self.store = store
         self.demoPartner = demoPartner
         self.today = today
         self.real = real
-        self.showsSettings = showsSettings
         _amountsHidden = State(initialValue: hidden)
         _locked = State(initialValue: real && UserDefaults.standard.bool(forKey: Preference.lock))
         _section = State(initialValue: screen)
@@ -97,7 +93,6 @@ public struct RootView: View {
                   position: store.isSetUp ? Double(section.rawValue) : 0)
         }
         .onChange(of: store.recordings) { offerUndo() }
-        .onAppear { if showsSettings { openSettings() } }
         // Locks again when the Mac sleeps or its screen locks, so it is never left open on a Mac someone else wakes.
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.willSleepNotification)) { _ in lockAgain() }
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.screensDidSleepNotification)) { _ in lockAgain() }
@@ -127,12 +122,13 @@ public struct RootView: View {
         case .pots: PotsView(store: store, today: day, onPayday: open, onSetBalance: { show(.balance($0)) })
         case .month: MonthView(store: store, today: day)
         case .insights: InsightsView(store: store, today: day)
+        case .settings: SettingsView(store: store)
         case .entries: EntriesPane(store: store, today: day)
         case .plan: PlanPane(store: store, month: YearMonth(day, calendar: store.ledger().calendar))
         }
     }
 
-    /// ⌘N logs a spend, ⌘1 to ⌘6 go to a section, ⇧⌘H hides amounts; hidden buttons, as the window has no menu of its own.
+    /// ⌘N logs a spend, ⌘1 to ⌘6 go to a section, ⌘, to Settings, ⇧⌘H hides amounts; hidden buttons, as the window has no menu of its own.
     @ViewBuilder private var shortcuts: some View {
         if store.isSetUp {
             Group {

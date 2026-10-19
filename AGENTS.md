@@ -29,12 +29,12 @@
 `Budget --demo` runs on a made-up 19 October 2026 on the starter plan, in memory (Main 640, Clothes 240, Emergency
 2 150, card −45; this month's salary items already paid), today pinned to 19 Oct 2026 12:00; it never opens the file on disk.
 
-- `--screen today|pots|month|insights|entries|plan`: the section it opens on; `--screen payday` is 1 November with the salary due and its
+- `--screen today|pots|month|insights|entries|plan|settings`: the section it opens on; `--screen payday` is 1 November with the salary due and its
   card open, `--screen log` Today with Quick log open, `--screen firstrun` a demo that
   has not been set up. Other values are ignored.
 - `--after-payday`: the salary added on 1 November with its planned split, today pinned there.
-- `--hidden`: every amount starts hidden. `--screen settings` opens the Settings window too (a second window: capture it by its
-  width, 440). The demo never reads the real app's settings and never locks.
+- `--hidden`: every amount starts hidden. The demo never locks, and its partner is "Sam"; Settings shows (and would change)
+  the real app's preferences, so don't click in it.
 - Keys and clicks are not delivered to a demo started from a shell, so the editors inside a sheet (a plan item, a
   typed amount, the right-click "Set Balance…", ⌘N / ⌘,) are checked by hand in the real app.
 - Month in the demo has only October (the demo starts there), so paging back through months, ⌘← / ⌘→ and the hover

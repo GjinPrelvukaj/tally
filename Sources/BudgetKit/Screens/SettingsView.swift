@@ -1,35 +1,32 @@
 import SwiftUI
 
-/// Tally → Settings… (⌘,): Privacy, Categories and the Partner, as glass tabs. Privacy and the partner's name are
-/// kept in the app's preferences on this Mac (`Preference`); categories in the store, with the money.
-public struct SettingsView: View {
-    /// Nil when the data couldn't be opened: then there are no categories to show.
-    let store: Store?
-    @State private var tab = Tab.privacy
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+/// Settings, a section of its own in the sidebar (⌘,): Privacy, Categories and the Partner, one under another.
+/// Privacy and the partner's name are kept in the app's preferences on this Mac (`Preference`); categories in
+/// the store, with the money.
+struct SettingsView: View {
+    let store: Store
 
-    enum Tab: String, CaseIterable { case privacy = "Privacy", categories = "Categories", partner = "Partner" }
-
-    public init(store: Store?) { self.store = store }
-
-    public var body: some View {
-        VStack(alignment: .leading, spacing: Kit.Space.edge) {
-            HStack(spacing: Kit.Space.item) {
-                ForEach(Tab.allCases.filter { $0 != .categories || store != nil }, id: \.self) { choice in
-                    Button(choice.rawValue) { tab = choice }
-                        .buttonStyle(.chip(chosen: tab == choice))
-                        .accessibilityAddTraits(tab == choice ? .isSelected : [])
-                }
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 32) {
+                group("Privacy") { PrivacySettings() }
+                group("Categories") { CategorySettings(store: store) }
+                group("Partner") { PartnerSettings() }
             }
-            switch tab {
-            case .privacy: PrivacySettings()
-            case .categories: if let store { CategorySettings(store: store) }
-            case .partner: PartnerSettings()
-            }
+            .frame(maxWidth: 560, alignment: .leading)
+            .padding(.horizontal, 40)
+            .padding(.top, 36)
+            .padding(.bottom, Kit.Space.edge)
+            .frame(maxWidth: .infinity)
         }
-        .padding(28)
-        .frame(width: 520, alignment: .topLeading)
-        .background { Glass(light: [Screen.plan.light], position: 0) }
+        .scrollIndicators(.never)
+    }
+
+    private func group(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: Kit.Space.group) {
+            Text(title.uppercased()).eyebrow()
+            content()
+        }
     }
 }
 

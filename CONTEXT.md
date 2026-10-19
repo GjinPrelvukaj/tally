@@ -5,7 +5,7 @@ Read this first, then [AGENTS.md](AGENTS.md) for how to work here.
 ## What it is
 
 A small native macOS app for one person's monthly money: a monthly plan, what actually happened, and a daily
-allowance, in one glass window: a sidebar of six sections (Today, Pots, Month, Insights, Entries, Plan) and the chosen one beside it. Swift 6, SwiftUI, SwiftData, macOS 26 or
+allowance, in one glass window: a sidebar of six sections (Today, Pots, Month, Insights, Entries, Plan) and Settings, and the chosen one beside it. Swift 6, SwiftUI, SwiftData, macOS 26 or
 later, no network, no third-party packages. Its look (black glass, colour as light from the bottom edge, springs,
 nothing moves unless something happens) comes from the author's app Brimlight.
 
@@ -17,16 +17,16 @@ Keep the data path: renaming it would make the app open empty on a Mac that alre
 
 Everything below is built: the money logic (balances, "still to pay" with carry-over, next income, the daily
 allowance, the emergency fund's goal month, the month line), the SwiftData store, a starter plan for the first run,
-the sidebar and its six sections, Insights (exact, tested rules), the Plan's and the entries' editors in a panel on the right, and the cards in the
+the sidebar and its six sections and Settings, Insights (exact, tested rules) with Ask Tally, the Plan's and the entries' editors in a panel on the right, and the cards in the
 middle: Quick log, a payday, Set Balance, Paid Back; the first run. See `docs/mac-layout.md` for the layout as agreed.
 Undo takes back the last recorded action. A style kit (`Design/Kit.swift`) holds every size, button and switch.
-Privacy: every amount can be hidden at once, and Tally can lock behind Touch ID (Tally → Settings…, ⌘,).
+Privacy: every amount can be hidden at once, and Tally can lock behind Touch ID (Settings, ⌘,).
 
 **Not done yet:** typing a negative balance (an overdrawn account, a card in credit); remembering Quick log's last category across launches; pots of your own
-(they are fixed: Main, Clothes, Emergency fund, Card); "Ask Tally" (see `docs/insights-and-partner.md`).
+(they are fixed: Main, Clothes, Emergency fund, Card).
 
 **Not checked by hand yet** (keys and clicks don't reach a demo started from a script): clicking the sidebar,
-rows, the payday pour, ⌘N / ⌘1–⌘6 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, the plan and entry editors (their pop-ups), pulling a card down,
+rows, the payday pour, ⌘N / ⌘1–⌘6 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, the plan and entry editors (their pop-ups), typing a question into Ask Tally, pulling a card down,
 month paging, resizing the window and it keeping its size, clicking a big number or the eye to hide amounts, the Touch ID lock
 (the demo never locks) and turning it on in Settings, two-finger swipes closing a card (down) or an editor panel (right),
 clicking into a hidden amount field to show it.
@@ -34,7 +34,7 @@ clicking into a hidden amount field to show it.
 ## Where things live
 
 ```
-Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|insights|entries|plan`: that section; `payday`, `log`: Today with that card open; `firstrun`: a demo not yet set up)
+Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|insights|entries|plan|settings`: that section; `payday`, `log`: Today with that card open; `firstrun`: a demo not yet set up)
 Sources/BudgetKit/Money/Cents.swift   money in whole cents: formatting (`formatted`, `wholeEuros` "2 000", `editable` "2 450,17" for a field), parsing, floor division
 Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027")
 Sources/BudgetKit/Money/Model.swift   Pot, Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)`); a spend names its category by key;
@@ -47,6 +47,9 @@ Sources/BudgetKit/Money/Insights+Spending.swift  running short before the next i
                                       the same days of last month (moved by 10 € and a quarter)
 Sources/BudgetKit/Money/Insights+Plan.swift  a noted spend in each of the last 3 months that no plan item is named for, a plan item skipped two
                                       months running, the card owing more at each month's end, the partner (owes, together this month)
+Sources/BudgetKit/Money/Ask.swift  `Question` (topic, period, category, search, with the partner), `Question.checked(against:categories:partnerName:)` (a
+                                      category or word kept only if said, cues decide the topic, time words win), `Ledger.answer` (an `Answer`: title, lines,
+                                      how it was understood), periods: today, this week from Monday, last week, this month, last month
 Sources/BudgetKit/Money/Partner.swift  `PartnerShare` (with, half, forThem; `theirs(of:)`, half rounding down), `Ledger.partnerOwes`
 Sources/BudgetKit/Money/Ledger.swift  Ledger: start balances + plan + entries; `balance(_:)`, `balance(_:endOf:)`, `total` (every pot, the card's debt taken off), `entries(in:)` (a month's money-moving entries, newest first), `categories`, `category(_:)` (by key; an unknown key reads "Other")
 Sources/BudgetKit/Money/Ledger+Due.swift  `Due`, `isDone`, `stillToPay(today:)`: done / still to pay, with unpaid items carried over; `split(of:)`: an income's undone items; `upcomingIncomes(today:)`: this month's incomes not yet due; `asked(_:)`: paying off the card asks for what is owed
@@ -80,7 +83,7 @@ Sources/BudgetKit/Design/Swipe.swift  `.swipeToClose(.down|.right, pull:ended:)`
 Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, insights, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours and `tint`, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
 Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `WindowSize`
 Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's pane, the cards over the blurred window (nothing behind takes clicks while one is open),
-                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘6, ⌘Z, ⇧⌘H; `FirstRunView` before set-up; `LockView` in place of everything
+                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘6, ⌘, (Settings), ⌘Z, ⇧⌘H; `FirstRunView` before set-up; `LockView` in place of everything
                                       while locked (on open when the setting is on, and again when the Mac sleeps or its screen locks; never in the demo);
                                       amounts hidden by `.redacted(reason: .privacy)` over the sidebar and pane (starts as `AmountsOnOpen` says; each toggle in the real app is kept for As I Left Them)
                                       The sections read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
@@ -88,12 +91,16 @@ Sources/BudgetKit/Screens/Sidebar.swift  Today (with how many are still to pay),
                                       "You can spend" at the bottom (not while Today shows), and Log a Spend in the section's `tint` (the left of its light, just below it), beside the eye that hides amounts
 Sources/BudgetKit/Screens/TodayView.swift  Today: "Monday 19 October", the ring with "YOU CAN SPEND", the amount a day ("a day until the 2 000", "2 000 is late", red below 0);
                                       beside it Still to pay and "Spent today", kept together in the middle of the pane; under them `TodayCards`
-Sources/BudgetKit/Screens/InsightsView.swift  Insights: "In short", then each insight as a card with a dot for its level; titles hide with the amounts
+Sources/BudgetKit/Screens/InsightsView.swift  Insights: Ask Tally (on a Mac with Apple Intelligence), "In short", then each insight as a card with a dot for its level
+Sources/BudgetKit/Screens/AskBox.swift  "Ask about your money", three example questions; the answer (written by `Ledger.answer`, live with the data) under how
+                                      the question was understood ("Spending · this week · with Sam")
+Sources/BudgetKit/Screens/AskReader.swift  the on-device model (`SystemLanguageModel.default`, never the cloud one) reads a question into a `Question` by guided
+                                      generation (`@Generable Reading`), then `Question.checked` against the words; it writes no sentence about the money
 Sources/BudgetKit/Screens/TodayCards.swift  three cards under Today: Next pay ("the 1st · in 13 days"), Main this month (a small month line, "ends at"), Pots
 Sources/BudgetKit/Screens/Privacy.swift  hiding amounts: `toggleAmounts` in the environment, `.bigAmount()` (hidden with the rest, a click hides or shows all);
                                       every other amount is marked `.privacySensitive()`; the month line leaves its amounts out while hidden
 Sources/BudgetKit/Screens/LockView.swift  "Tally is locked" and Unlock with Touch ID (or the Mac's password), via LocalAuthentication; asks at once
-Sources/BudgetKit/Screens/SettingsView.swift  the Settings window, three glass tabs: Privacy (Lock with Touch ID, asked first so a lock that can't open is
+Sources/BudgetKit/Screens/SettingsView.swift  Settings, a section in the sidebar (⌘,): Privacy (Lock with Touch ID, asked first so a lock that can't open is
                                       never set; Amounts when Tally opens: Shown / Hidden / As I Left Them), Categories, Partner (their name; empty, it's off)
 Sources/BudgetKit/Screens/CategorySettings.swift  Settings → Categories: name (saved as typed), pot (`GlassPicker`), Retire / Bring Back, Add
 Sources/BudgetKit/Screens/PartnerChoice.swift  Just Me / With Ana / Half / For Ana (a `GlassSegments` bar, or chips two by two where narrow), "Ana Pays Me Back";
