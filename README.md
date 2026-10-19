@@ -57,4 +57,5 @@ build/Tally.app/Contents/MacOS/Tally --demo --screen pots   # made-up example da
 
 ## Licence
 
-[MIT](LICENSE) © 2026 Gjin Prelvukaj
+[GNU GPL v3](LICENSE) © 2026 Gjin Prelvukaj. You can use, study, change and share Tally, but anything you
+build from it and share must also be open source under the GPL v3.
