@@ -21,6 +21,9 @@ public struct YearMonth: Hashable, Comparable, Codable, Sendable {
         (a.year, a.month) < (b.year, b.month)
     }
 
+    /// How many months after `earlier` this is (negative when before it).
+    public func monthsSince(_ earlier: YearMonth) -> Int { (year - earlier.year) * 12 + month - earlier.month }
+
     public var next: YearMonth { month == 12 ? YearMonth(year + 1, 1) : YearMonth(year, month + 1) }
     public var previous: YearMonth { month == 1 ? YearMonth(year - 1, 12) : YearMonth(year, month - 1) }
 

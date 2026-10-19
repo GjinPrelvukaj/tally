@@ -18,6 +18,10 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
     var onlyInYear: Int?
     var onlyInMonth: Int?
     var paused: Bool
+    /// Since `SchemaV4`: every how many months (nil: every month), and from which month (nil: always).
+    var repeatEvery: Int?
+    var startsInYear: Int?
+    var startsInMonth: Int?
 
     init(_ item: PlanItem, order: Int) {
         id = item.id
@@ -31,6 +35,9 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
         onlyInYear = item.onlyIn?.year
         onlyInMonth = item.onlyIn?.month
         paused = item.paused
+        repeatEvery = item.repeatEvery > 1 ? item.repeatEvery : nil
+        startsInYear = item.startsIn?.year
+        startsInMonth = item.startsIn?.month
     }
 
     /// Writes an edited item over this record, keeping its place in the list.
@@ -44,6 +51,9 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
         onlyInYear = item.onlyIn?.year
         onlyInMonth = item.onlyIn?.month
         paused = item.paused
+        repeatEvery = item.repeatEvery > 1 ? item.repeatEvery : nil
+        startsInYear = item.startsIn?.year
+        startsInMonth = item.startsIn?.month
     }
 
     /// An item that waits for an income that is going away becomes "any day", so it is never left waiting for nothing.
@@ -55,7 +65,8 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
         PlanItem(id: id, name: name, amount: Cents(amount), kind: PlanKind(rawValue: kind) ?? .payment,
                  from: from.flatMap(Pot.init), to: to.flatMap(Pot.init),
                  schedule: (try? JSONDecoder().decode(Schedule.self, from: schedule)) ?? .anyDay,
-                 onlyIn: onlyInYear.flatMap { year in onlyInMonth.map { YearMonth(year, $0) } }, paused: paused)
+                 onlyIn: onlyInYear.flatMap { year in onlyInMonth.map { YearMonth(year, $0) } }, paused: paused,
+                 repeatEvery: repeatEvery ?? 1, startsIn: startsInYear.flatMap { year in startsInMonth.map { YearMonth(year, $0) } })
     }
 }
 

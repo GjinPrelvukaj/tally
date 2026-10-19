@@ -36,12 +36,12 @@ struct PlanItemEditor: View {
                 if draft.kind != .income { line("From") { pots($draft.from) } }
                 if draft.kind == .income || draft.kind == .transfer { line("To") { pots($draft.to) } }
                 if draft.kind != .daily { when }
-                line("Only in one month") {
-                    Toggle("", isOn: Binding { draft.onlyIn != nil } set: { draft.onlyIn = $0 ? month : nil })
-                        .labelsHidden().toggleStyle(.glass)
+                line("Repeats") {
+                    pick($draft.repeats, [(.everyMonth, "Every month"), (.every(2), "Every 2 months"), (.every(3), "Every 3 months"),
+                                          (.every(6), "Every 6 months"), (.every(12), "Every year"), (.once, "Once")])
                 }
-                if draft.onlyIn != nil {
-                    line("Month") { pick(Binding { draft.onlyIn ?? month } set: { draft.onlyIn = $0 }, months) }
+                if draft.repeats != .everyMonth {
+                    line(draft.repeats == .once ? "In" : "Starting") { pick($draft.repeatMonth, months) }
                 }
                 line("Paused") {
                     Toggle("", isOn: $draft.paused).labelsHidden().toggleStyle(.glass)
@@ -108,7 +108,7 @@ struct PlanItemEditor: View {
         var all = [month]
         for _ in 0..<12 { all.insert(all[0].previous, at: 0) }
         for _ in 0..<24 { all.append(all[all.count - 1].next) }
-        if let only = draft.onlyIn, !all.contains(only) { all = (all + [only]).sorted() }
+        if !all.contains(draft.repeatMonth) { all = (all + [draft.repeatMonth]).sorted() }
         return all.map { ($0, $0.shortName) }
     }
 

@@ -44,7 +44,8 @@ public enum PlanKind: String, Codable, Sendable {
     }
 }
 
-/// One line of the monthly plan. `onlyIn` makes it a one-off for that month.
+/// One line of the plan. It comes every `repeatEvery` months (1: every month, 12: every year) from `startsIn`
+/// (nil: from always); `onlyIn` makes it a one-off for that month instead.
 public struct PlanItem: Identifiable, Hashable, Codable, Sendable {
     public var id: UUID
     public var name: String
@@ -55,9 +56,11 @@ public struct PlanItem: Identifiable, Hashable, Codable, Sendable {
     public var schedule: Schedule
     public var onlyIn: YearMonth?
     public var paused: Bool
+    public var repeatEvery: Int
+    public var startsIn: YearMonth?
 
     public init(id: UUID = UUID(), name: String, amount: Cents, kind: PlanKind, from: Pot? = nil, to: Pot? = nil,
-                schedule: Schedule, onlyIn: YearMonth? = nil, paused: Bool = false) {
+                schedule: Schedule, onlyIn: YearMonth? = nil, paused: Bool = false, repeatEvery: Int = 1, startsIn: YearMonth? = nil) {
         self.id = id
         self.name = name
         self.amount = amount
@@ -67,11 +70,19 @@ public struct PlanItem: Identifiable, Hashable, Codable, Sendable {
         self.schedule = schedule
         self.onlyIn = onlyIn
         self.paused = paused
+        self.repeatEvery = max(1, repeatEvery)
+        self.startsIn = startsIn
     }
 
     public func applies(in month: YearMonth) -> Bool {
-        !paused && (onlyIn == nil || onlyIn == month)
+        guard !paused, onlyIn == nil || onlyIn == month else { return false }
+        guard let startsIn else { return true }
+        let gap = month.monthsSince(startsIn)
+        return gap >= 0 && gap % repeatEvery == 0
     }
+
+    /// What it comes to a month (a yearly one, a twelfth); nil for a one-off.
+    public var perMonth: Cents? { onlyIn == nil ? amount.dividedFloor(by: repeatEvery) : nil }
 }
 
 /// How a spend was paid. The credit card adds to what it owes; the bank card and cash come out of the category's pot

@@ -22,7 +22,8 @@ import Testing
         draft.amount = "120,50"
         draft.when = .day
         draft.day = 5
-        draft.onlyIn = YearMonth(2026, 11)
+        draft.repeats = .once
+        draft.repeatMonth = YearMonth(2026, 11)
         draft.paused = true
         let item = try #require(draft.item)
         #expect(item.id == Example.ID.bills)
@@ -34,7 +35,7 @@ import Testing
     }
 
     @Test func anItemNeedsANameAnAmountAndAWhen() {
-        var draft = PlanItemDraft()
+        var draft = PlanItemDraft(startingIn: YearMonth(2026, 10))
         #expect(draft.item == nil)
         draft.name = "Gym"
         #expect(draft.item == nil)
@@ -53,7 +54,7 @@ import Testing
     }
 
     @Test func changingWhatItIsPicksSensiblePots() throws {
-        var draft = PlanItemDraft()
+        var draft = PlanItemDraft(startingIn: YearMonth(2026, 10))
         draft.name = "Side job"
         draft.amount = "100"
         draft.kind = .income
