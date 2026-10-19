@@ -100,9 +100,10 @@ Sources/BudgetKit/Screens/TodayCards.swift  three cards under Today: Next pay ("
 Sources/BudgetKit/Screens/Privacy.swift  hiding amounts: `toggleAmounts` in the environment, `.bigAmount()` (hidden with the rest, a click hides or shows all);
                                       every other amount is marked `.privacySensitive()`; the month line leaves its amounts out while hidden
 Sources/BudgetKit/Screens/LockView.swift  "Tally is locked" and Unlock with Touch ID (or the Mac's password), via LocalAuthentication; asks at once
-Sources/BudgetKit/Screens/SettingsView.swift  Settings, a section in the sidebar (⌘,): Privacy (Lock with Touch ID, asked first so a lock that can't open is
-                                      never set; Amounts when Tally opens: Shown / Hidden / As I Left Them), Categories, Partner (their name; empty, it's off)
-Sources/BudgetKit/Screens/CategorySettings.swift  Settings → Categories: name (saved as typed), pot (`GlassPicker`), Retire / Bring Back, Add
+Sources/BudgetKit/Screens/SettingsView.swift  Settings, a section in the sidebar (⌘,): a `GlassSegments` bar of three tabs, each on `SettingsCard`s of `SettingRow`s: Privacy
+                                      (Lock with Touch ID, asked first so a lock that can't open is never set; Amounts when Tally opens: Shown / Hidden / As I Left
+                                      Them), Categories, Partner (their name; empty, it's off)
+Sources/BudgetKit/Screens/CategorySettings.swift  Settings → Categories: one card of rows, name (saved as typed), pot (`GlassPicker`), a ⋯ menu to Retire / Bring Back; Add on its own card
 Sources/BudgetKit/Screens/PartnerChoice.swift  Just Me / With Ana / Half / For Ana (a `GlassSegments` bar, or chips two by two where narrow), "Ana Pays Me Back";
                                       `partnerName` in the environment (Settings in the real app, "Sam" in the demo)
 Sources/BudgetKit/Screens/PaidBackSheet.swift  "Ana paid back": how much (all they owe to start), into Main; Today shows "Ana owes you" with Paid Back
