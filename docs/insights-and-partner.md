@@ -45,7 +45,8 @@ All exact, from the ledger; nothing guessed.
 
 ## 4. The Insights section
 
-- A sixth section in the sidebar (⌘6): the insights, the most pressing first.
-- On a Mac with Apple Intelligence, a short weekly summary at the top, written by Apple's on-device model
-  (FoundationModels; nothing leaves the Mac) from the insights' own words and numbers only. It is told not to work
-  anything out. Without Apple Intelligence the section is the same, without the summary.
+- A section in the sidebar under Month (⌘4): the insights, the most pressing first, with the count of warnings.
+- Over them, "In short": one line made by code from the insights (what needs a look, or that all is on track).
+- The on-device model was tried for that line and dropped (19 October): given "Sam owes you 29,10 €" it wrote
+  "You owe Sam 29,10 €", every number right and the meaning backwards. If it comes back, it is as "Ask Tally",
+  where the model only phrases answers that code looks up (tool calls), never a summary of its own.

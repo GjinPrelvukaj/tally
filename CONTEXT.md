@@ -5,7 +5,7 @@ Read this first, then [AGENTS.md](AGENTS.md) for how to work here.
 ## What it is
 
 A small native macOS app for one person's monthly money: a monthly plan, what actually happened, and a daily
-allowance, in one glass window: a sidebar of five sections (Today, Pots, Month, Entries, Plan) and the chosen one beside it. Swift 6, SwiftUI, SwiftData, macOS 26 or
+allowance, in one glass window: a sidebar of six sections (Today, Pots, Month, Insights, Entries, Plan) and the chosen one beside it. Swift 6, SwiftUI, SwiftData, macOS 26 or
 later, no network, no third-party packages. Its look (black glass, colour as light from the bottom edge, springs,
 nothing moves unless something happens) comes from the author's app Brimlight.
 
@@ -17,16 +17,16 @@ Keep the data path: renaming it would make the app open empty on a Mac that alre
 
 Everything below is built: the money logic (balances, "still to pay" with carry-over, next income, the daily
 allowance, the emergency fund's goal month, the month line), the SwiftData store, a starter plan for the first run,
-the sidebar and its five sections, the Plan's and the entries' editors in a panel on the right, and the cards in the
+the sidebar and its six sections, Insights (exact, tested rules), the Plan's and the entries' editors in a panel on the right, and the cards in the
 middle: Quick log, a payday, Set Balance, Paid Back; the first run. See `docs/mac-layout.md` for the layout as agreed.
 Undo takes back the last recorded action. A style kit (`Design/Kit.swift`) holds every size, button and switch.
 Privacy: every amount can be hidden at once, and Tally can lock behind Touch ID (Tally → Settings…, ⌘,).
 
 **Not done yet:** typing a negative balance (an overdrawn account, a card in credit); remembering Quick log's last category across launches; pots of your own
-(they are fixed: Main, Clothes, Emergency fund, Card); Insights (see `docs/insights-and-partner.md`).
+(they are fixed: Main, Clothes, Emergency fund, Card); "Ask Tally" (see `docs/insights-and-partner.md`).
 
 **Not checked by hand yet** (keys and clicks don't reach a demo started from a script): clicking the sidebar,
-rows, the payday pour, ⌘N / ⌘1–⌘5 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, the plan and entry editors (their pop-ups), pulling a card down,
+rows, the payday pour, ⌘N / ⌘1–⌘6 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, the plan and entry editors (their pop-ups), pulling a card down,
 month paging, resizing the window and it keeping its size, clicking a big number or the eye to hide amounts, the Touch ID lock
 (the demo never locks) and turning it on in Settings, two-finger swipes closing a card (down) or an editor panel (right),
 clicking into a hidden amount field to show it.
@@ -34,12 +34,19 @@ clicking into a hidden amount field to show it.
 ## Where things live
 
 ```
-Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|entries|plan`: that section; `payday`, `log`: Today with that card open; `firstrun`: a demo not yet set up)
+Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|insights|entries|plan`: that section; `payday`, `log`: Today with that card open; `firstrun`: a demo not yet set up)
 Sources/BudgetKit/Money/Cents.swift   money in whole cents: formatting (`formatted`, `wholeEuros` "2 000", `editable` "2 450,17" for a field), parsing, floor division
 Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027")
 Sources/BudgetKit/Money/Model.swift   Pot, Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)`); a spend names its category by key;
                                       `PaymentMethod` (bank, card, cash: the credit card adds to its debt, the others come out of the category's pot)
 Sources/BudgetKit/Money/Category.swift  `Category`: key, name, pot, retired; the five `starters` keep the keys they always had (`food`…)
+Sources/BudgetKit/Money/Insight.swift  `Insight` (kind, level: warning / notice / good, title, detail), `Ledger.insights(today:partnerName:)` warnings first,
+                                      `Insight.headline` (the "In short" line, made from their titles)
+Sources/BudgetKit/Money/Insights+Spending.swift  running short before the next income (or on track), the last 7 days' pace against the allowance,
+                                      habits (a note, or a category of your own, 4+ times in 30 days, with a year's cost), each category against
+                                      the same days of last month (moved by 10 € and a quarter)
+Sources/BudgetKit/Money/Insights+Plan.swift  a noted spend in each of the last 3 months that no plan item is named for, a plan item skipped two
+                                      months running, the card owing more at each month's end, the partner (owes, together this month)
 Sources/BudgetKit/Money/Partner.swift  `PartnerShare` (with, half, forThem; `theirs(of:)`, half rounding down), `Ledger.partnerOwes`
 Sources/BudgetKit/Money/Ledger.swift  Ledger: start balances + plan + entries; `balance(_:)`, `balance(_:endOf:)`, `total` (every pot, the card's debt taken off), `entries(in:)` (a month's money-moving entries, newest first), `categories`, `category(_:)` (by key; an unknown key reads "Other")
 Sources/BudgetKit/Money/Ledger+Due.swift  `Due`, `isDone`, `stillToPay(today:)`: done / still to pay, with unpaid items carried over; `split(of:)`: an income's undone items; `upcomingIncomes(today:)`: this month's incomes not yet due; `asked(_:)`: paying off the card asks for what is owed
@@ -70,10 +77,10 @@ Sources/BudgetKit/Design/Spring.swift  copied from Brimlight: the damped spring
 Sources/BudgetKit/Design/Swipe.swift  `.swipeToClose(.down|.right, pull:ended:)`: two fingers on the trackpad (a local scroll-event monitor; not a mouse wheel,
                                       not momentum) pull a card down or a `SidePanel` right, following them (the panel gives its width back as it goes, so the list widens with the fingers); `SwipeDirection.travel` reads the
                                       fingers' way whatever the scroll setting, and ignores a move mostly the other way
-Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours and `tint`, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
+Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, insights, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours and `tint`, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
 Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `WindowSize`
 Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's pane, the cards over the blurred window (nothing behind takes clicks while one is open),
-                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘5, ⌘Z, ⇧⌘H; `FirstRunView` before set-up; `LockView` in place of everything
+                                      the quiet error line, the Undo pill; ⌘N, ⌘1–⌘6, ⌘Z, ⇧⌘H; `FirstRunView` before set-up; `LockView` in place of everything
                                       while locked (on open when the setting is on, and again when the Mac sleeps or its screen locks; never in the demo);
                                       amounts hidden by `.redacted(reason: .privacy)` over the sidebar and pane (starts as `AmountsOnOpen` says; each toggle in the real app is kept for As I Left Them)
                                       The sections read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
@@ -81,6 +88,7 @@ Sources/BudgetKit/Screens/Sidebar.swift  Today (with how many are still to pay),
                                       "You can spend" at the bottom (not while Today shows), and Log a Spend in the section's `tint` (the left of its light, just below it), beside the eye that hides amounts
 Sources/BudgetKit/Screens/TodayView.swift  Today: "Monday 19 October", the ring with "YOU CAN SPEND", the amount a day ("a day until the 2 000", "2 000 is late", red below 0);
                                       beside it Still to pay and "Spent today", kept together in the middle of the pane; under them `TodayCards`
+Sources/BudgetKit/Screens/InsightsView.swift  Insights: "In short", then each insight as a card with a dot for its level; titles hide with the amounts
 Sources/BudgetKit/Screens/TodayCards.swift  three cards under Today: Next pay ("the 1st · in 13 days"), Main this month (a small month line, "ends at"), Pots
 Sources/BudgetKit/Screens/Privacy.swift  hiding amounts: `toggleAmounts` in the environment, `.bigAmount()` (hidden with the rest, a click hides or shows all);
                                       every other amount is marked `.privacySensitive()`; the month line leaves its amounts out while hidden
@@ -112,8 +120,8 @@ Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's d
                                       dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out
 Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid);
                                       while amounts are hidden an amount field shows a bar until clicked or typed into (`secret: false` for a name or note)
-Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, Bank Card / Credit Card / Cash (`PaymentMethodPicker`, a `GlassSegments` bar), the partner (when named), note, then the category chips,
-                                      three a row, retired ones left out (`CategoryChips`; a tap logs and closes, so everything else comes above them); Return logs under the category used last
+Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, the category chips (three a row, retired ones left out; a tap only chooses, the one used last to begin with), Bank Card /
+                                      Credit Card / Cash (`PaymentMethodPicker`), the partner (when named), the note (`NoteField`); Log (or Return) saves
 Sources/BudgetKit/Screens/EntriesPane.swift  Entries: a month's entries newest first, "‹ October 2026 ›" back to the first month; a row opens `EntryEditor`
                                       in a `SidePanel` on the right; `Entry.title`, `detail`, `shownAmount` say a row
 Sources/BudgetKit/Screens/EntryEditor.swift  one entry: a spend's amount, how it was paid (bank, card or cash), the partner, note and category; a payment's, income's or repayment's amount; Delete

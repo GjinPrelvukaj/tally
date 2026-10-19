@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// The sections in the sidebar, top to bottom, ⌘1 to ⌘5 apart.
+/// The sections in the sidebar, top to bottom, ⌘1 to ⌘6 apart.
 public enum Screen: Int, CaseIterable, Sendable {
-    case today, pots, month, entries, plan
+    case today, pots, month, insights, entries, plan
 
-    /// From `--screen today|pots|month|entries|plan`; anything else is nil.
+    /// From `--screen today|pots|month|insights|entries|plan`; anything else is nil.
     public init?(named name: String) {
         guard let screen = Screen.allCases.first(where: { "\($0)" == name }) else { return nil }
         self = screen
@@ -18,6 +18,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .today: "Today"
         case .pots: "Pots"
         case .month: "Month"
+        case .insights: "Insights"
         case .entries: "Entries"
         case .plan: "Plan"
         }
@@ -28,6 +29,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .today: "sun.max"
         case .pots: "cylinder.split.1x2"
         case .month: "chart.xyaxis.line"
+        case .insights: "sparkles"
         case .entries: "list.bullet"
         case .plan: "calendar"
         }
@@ -41,6 +43,7 @@ public enum Screen: Int, CaseIterable, Sendable {
         switch self {
         case .today, .entries: [.arrived, .ahead]
         case .plan: [Pot.main.light, .arrived, Pot.main.light]
+        case .insights: [.hex(0xFBBF24), .hex(0xA78BFA), .hex(0xFBBF24)]
         case .pots: Pot.allCases.map(\.light)
         case .month: [.hex(0xA78BFA), .hex(0xA78BFA), .ahead]
         }

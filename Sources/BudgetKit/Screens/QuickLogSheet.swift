@@ -10,12 +10,12 @@ struct LoggedSpend {
     var paysBack: Bool
 }
 
-/// A spend in a few seconds: type the amount, say how it was paid, tap what it was for.
-/// Return logs it under the category used last.
+/// A spend in a few seconds: the amount, what it was for, how it was paid, who with, a note; then Log (or Return).
+/// Choosing a category only chooses it: nothing is saved until Log. It starts on the category used last.
 struct QuickLogSheet: View {
     /// The categories offered (not the retired ones).
     let categories: [Category]
-    /// The category Return uses; lit among the chips.
+    /// The category used last: chosen to begin with.
     let last: Category
     let log: (LoggedSpend) -> Void
     let cancel: () -> Void
@@ -24,24 +24,23 @@ struct QuickLogSheet: View {
     @State private var method = PaymentMethod.bank
     @State private var partner: PartnerShare?
     @State private var paysBack = false
-    /// A double-click on a chip or a second Return must not log twice.
+    @State private var chosen: Category?
+    /// A double-click on Log or a second Return must not log twice.
     @State private var sent = false
     @Environment(\.partnerName) private var partnerName
 
     private var cents: Cents? { Cents.parsePositive(amount) }
+    private var category: Category { chosen ?? last }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Kit.Space.group) {
             AmountField(label: "Spent", text: $amount, valid: amount.isEmpty || cents != nil, autofocus: true)
-            // Above the categories: a tap on one logs at once, so everything else comes first.
+            CategoryChips(categories: categories, chosen: category) { chosen = $0 }
             PaymentMethodPicker(method: $method)
             if !partnerName.isEmpty { PartnerChoice(name: partnerName, share: $partner, paysBack: $paysBack) }
-            GlassField(label: "Note", text: $note, align: .leading, hint: "Note (optional)", secret: false)
-            CategoryChips(categories: categories, chosen: last, tap: save)
-                .disabled(cents == nil)
-                .opacity(cents == nil ? 0.45 : 1)
+            NoteField(text: $note)
             SheetFooter(cancel: cancel) {
-                Button("Log \(last.name)") { save(last) }
+                Button("Log \(category.name)", action: save)
                     .buttonStyle(.primary)
                     .disabled(cents == nil)
             }
@@ -49,7 +48,7 @@ struct QuickLogSheet: View {
         .modal(close: cancel)
     }
 
-    private func save(_ category: Category) {
+    private func save() {
         guard !sent, let cents else { return }
         sent = true
         log(LoggedSpend(amount: cents, category: category, note: note, method: method, partner: partner, paysBack: paysBack))
