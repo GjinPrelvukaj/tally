@@ -62,7 +62,7 @@ struct MoneyWithSheet: View {
                 // Only the amount hides with the rest: the words still say what saving will do.
                 HStack(spacing: 4) {
                     Text(outcome.words)
-                    if let amount = outcome.amount { Text(amount.formatted).monospacedDigit().privacySensitive() }
+                    if let amount = outcome.amount { Text(amount.formatted).monospacedDigit().privateAmount() }
                 }
                 .font(Kit.quiet).opacity(0.55)
             }

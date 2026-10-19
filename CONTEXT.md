@@ -85,11 +85,12 @@ Sources/BudgetKit/Design/Swipe.swift  `.swipeToClose(.down|.right, pull:ended:)`
                                       not momentum) pull a card down or a `SidePanel` right, following them (the panel gives its width back as it goes, so the list widens with the fingers); `SwipeDirection.travel` reads the
                                       fingers' way whatever the scroll setting, and ignores a move mostly the other way
 Sources/BudgetKit/Screens/Screen.swift  `Screen` (today, pots, month, insights, entries, plan: the sidebar's sections), titles, symbols, ⌘ keys, each section's edge-light colours and `tint`, each pot's colour (`Pot.light`, and the two named colours `Color.arrived` green / `Color.ahead` cyan)
-Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `WindowSize`
+Sources/BudgetKit/Screens/Glass.swift  the black glass behind the window: corners 22, hairline, the edge light crossfading to the chosen section; `lightRoom` (48: how far up the light reaches; the pane, the
+                                      Undo pill and the cards keep above it, so nothing touches it); `WindowSize`
 Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's pane, the cards over the blurred window (nothing behind takes clicks while one is open),
                                       the quiet error line, the Undo pill; ⌘N, ⌘1–⌘7, ⌘, (Settings), ⌘Z, ⇧⌘H; `FirstRunView` before set-up; `LockView` in place of everything
                                       while locked (on open when the setting is on, and again when the Mac sleeps or its screen locks; never in the demo);
-                                      amounts hidden by `.redacted(reason: .privacy)` over the sidebar and pane (starts as `AmountsOnOpen` says; each toggle in the real app is kept for As I Left Them)
+                                      amounts hidden by `amountsHidden` in the environment over the sidebar and pane (starts as `AmountsOnOpen` says; each toggle in the real app is kept for As I Left Them)
                                       The sections read one `day`, refreshed on `NSCalendarDayChanged` (no timer)
 Sources/BudgetKit/Screens/Sidebar.swift  Today (with how many are still to pay), Pots, Month; "Records": Entries (this month's count), Plan;
                                       "You can spend" at the bottom (not while Today shows), and Log a Spend in the section's `tint` (the left of its light, just below it), beside the eye that hides amounts
@@ -102,7 +103,8 @@ Sources/BudgetKit/Screens/AskReader.swift  the on-device model (`SystemLanguageM
                                       generation (`@Generable Reading`), then `Question.checked` against the words; it writes no sentence about the money
 Sources/BudgetKit/Screens/TodayCards.swift  three cards under Today: Next pay ("the 1st · in 13 days"), Main this month (a small month line, "ends at"), Pots
 Sources/BudgetKit/Screens/Privacy.swift  hiding amounts: `toggleAmounts` in the environment, `.bigAmount()` (hidden with the rest, a click hides or shows all);
-                                      every other amount is marked `.privacySensitive()`; the month line leaves its amounts out while hidden
+                                      every other amount is marked `.privateAmount()`: hidden, one glass shape the size of it (a field's fill and hairline, round
+                                      ends, corners of 10 when tall); the month line leaves its amounts out while hidden
 Sources/BudgetKit/Screens/LockView.swift  "Tally is locked" and Unlock with Touch ID (or the Mac's password), via LocalAuthentication; asks at once
 Sources/BudgetKit/Screens/SettingsView.swift  Settings, a section in the sidebar (⌘,): a `GlassSegments` bar of three tabs, each on `SettingsCard`s of `SettingRow`s: Privacy
                                       (Lock with Touch ID, asked first so a lock that can't open is never set; Amounts when Tally opens: Shown / Hidden / As I Left

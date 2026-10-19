@@ -124,7 +124,7 @@ private struct MonthPage: View {
         HStack {
             Text(name).opacity(0.55)
             Spacer(minLength: 8)
-            Text(value).monospacedDigit().opacity(0.88).privacySensitive()
+            Text(value).monospacedDigit().opacity(0.88).privateAmount()
         }
         .font(.system(size: 13))
         .frame(height: 26)

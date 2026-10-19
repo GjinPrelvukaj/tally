@@ -82,7 +82,7 @@ struct PlanPane: View {
                 Spacer()
                 if group != .everyDay {
                     let total = items.filter { !$0.paused }.reduce(Cents.zero) { $0 + $1.amount }
-                    Text(total.short).font(Living.caption).monospacedDigit().opacity(0.45).privacySensitive()
+                    Text(total.short).font(Living.caption).monospacedDigit().opacity(0.45).privateAmount()
                 }
             }
             VStack(spacing: 0) {
@@ -102,8 +102,8 @@ struct PlanPane: View {
                 Text(item.name).font(Kit.body).lineLimit(1).layoutPriority(1)
                 Spacer(minLength: Kit.Space.item)
                 Text(when(item, plan: plan)).font(Kit.quiet).opacity(0.4).lineLimit(1)
-                    .privacySensitive(item.schedule.waitsForIncome)
-                Text(item.amount.short).font(Kit.body).monospacedDigit().privacySensitive()
+                    .privateAmount(item.schedule.waitsForIncome)
+                Text(item.amount.short).font(Kit.body).monospacedDigit().privateAmount()
             }
             .opacity(item.paused ? 0.4 : 0.9)
             .padding(.horizontal, 12)

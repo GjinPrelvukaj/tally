@@ -8,9 +8,7 @@ struct Sidebar: View {
     let go: (Screen) -> Void
     let log: () -> Void
     @Environment(\.toggleAmounts) private var toggleAmounts
-    @Environment(\.redactionReasons) private var redaction
-
-    private var hidden: Bool { redaction.contains(.privacy) }
+    @Environment(\.amountsHidden) private var hidden
 
     var body: some View {
         let ledger = store.ledger()
@@ -35,7 +33,7 @@ struct Sidebar: View {
                     Text(allowance.perDay.formatted).font(.system(size: 17, weight: .semibold)).monospacedDigit()
                         .bigAmount()
                         .foregroundStyle(allowance.perDay < .zero ? Color.red : .white)
-                    Text("a day until the \(allowance.until.item.amount.wholeEuros)").font(Kit.quiet).opacity(0.45).privacySensitive()
+                    Text("a day until the \(allowance.until.item.amount.wholeEuros)").font(Kit.quiet).opacity(0.45).privateAmount()
                 }
                 .padding(.horizontal, 10)
                 .padding(.bottom, Kit.Space.group)

@@ -29,7 +29,7 @@ struct TodayCards: View {
             let calendar = ledger.calendar
             let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: today), to: calendar.startOfDay(for: next.date)).day ?? 0
             Text(next.item.amount.formatted).font(.system(size: 20, weight: .semibold)).monospacedDigit()
-                .lineLimit(1).minimumScaleFactor(0.6).privacySensitive()
+                .lineLimit(1).minimumScaleFactor(0.6).privateAmount()
             Text(next.item.name).font(Kit.body).opacity(0.7).lineLimit(1)
             Text(next.late ? "late" : days <= 0 ? "today" : "the \(ordinal(calendar.component(.day, from: next.date))) · in \(days) day\(days == 1 ? "" : "s")")
                 .font(Kit.quiet).opacity(0.45)
@@ -46,7 +46,7 @@ struct TodayCards: View {
             MonthLine(line: line, days: month.days(calendar: calendar), today: calendar.component(.day, from: today), paydays: [])
                 .frame(height: 56)
             if let end = line.last {
-                Text("ends at \(end.balance.formatted)").font(Kit.quiet).opacity(0.45).privacySensitive()
+                Text("ends at \(end.balance.formatted)").font(Kit.quiet).opacity(0.45).privateAmount()
             }
         }
     }
@@ -58,7 +58,7 @@ struct TodayCards: View {
                     Circle().fill(pot.light).frame(width: 6, height: 6)
                     Text(pot.tubeName).font(Kit.quiet).opacity(0.7).lineLimit(1)
                     Spacer(minLength: 4)
-                    Text(ledger.balance(pot).short).font(Kit.quiet).monospacedDigit().privacySensitive()
+                    Text(ledger.balance(pot).short).font(Kit.quiet).monospacedDigit().privateAmount()
                 }
             }
         }

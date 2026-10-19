@@ -145,11 +145,11 @@ extension ToggleStyle where Self == GlassSwitchStyle {
 }
 
 extension View {
-    /// A section's content in the pane right of the sidebar: the same room round every one.
+    /// A section's content in the pane right of the sidebar: the same room round every one. The pane itself
+    /// already ends above the window's light, so no room is added at the bottom.
     func pane() -> some View {
         padding(.horizontal, 40)
             .padding(.top, 36)
-            .padding(.bottom, Kit.Space.edge)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 

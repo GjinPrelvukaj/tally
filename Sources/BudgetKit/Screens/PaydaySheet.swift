@@ -27,7 +27,7 @@ struct PaydaySheet: View {
             HStack {
                 Text("Left in Main").opacity(0.55)
                 Spacer()
-                Text(draft.left?.formatted ?? "—").monospacedDigit().privacySensitive()
+                Text(draft.left?.formatted ?? "—").monospacedDigit().privateAmount()
                     .foregroundStyle(draft.left.map { $0 < .zero } == true ? Color.red : .white)
             }
             .font(.system(size: 13))

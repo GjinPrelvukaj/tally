@@ -78,7 +78,7 @@ private struct SpentToday: View {
                         Text(entry.method == .cash ? "Cash" : "Card").font(Kit.quiet).opacity(0.4)
                     }
                     Spacer(minLength: 8)
-                    Text(entry.amount.formatted).monospacedDigit().privacySensitive()
+                    Text(entry.amount.formatted).monospacedDigit().privateAmount()
                 }
                 .font(Kit.body)
                 .opacity(0.88)
@@ -98,7 +98,7 @@ private struct PartnerOwes: View {
     var body: some View {
         HStack(spacing: 8) {
             Text("\(name) owes you").opacity(0.7)
-            Text(owes.formatted).monospacedDigit().privacySensitive()
+            Text(owes.formatted).monospacedDigit().privateAmount()
             Spacer(minLength: 8)
             Button("Paid Back", action: paidBack).buttonStyle(.secondary)
         }
@@ -116,9 +116,9 @@ private struct AllowanceText: View {
             VStack(spacing: 4) {
                 Text("YOU CAN SPEND").eyebrow()
                 amount(allowance.perDay)
-                Text("a day until the \(income)").font(.system(size: 12)).opacity(0.55).privacySensitive()
+                Text("a day until the \(income)").font(.system(size: 12)).opacity(0.55).privateAmount()
                 if allowance.until.late {
-                    Text("\(income) is late").font(Living.caption).opacity(0.4).privacySensitive()
+                    Text("\(income) is late").font(Living.caption).opacity(0.4).privateAmount()
                 }
             }
             .accessibilityElement(children: .combine)

@@ -105,7 +105,7 @@ struct EntriesPane: View {
                     Text(entry.detail(ledger: ledger, partner: partnerName)).font(Kit.quiet).opacity(0.4).lineLimit(1)
                 }
                 Spacer(minLength: Kit.Space.item)
-                Text(entry.shownAmount).font(Kit.body).monospacedDigit().privacySensitive()
+                Text(entry.shownAmount).font(Kit.body).monospacedDigit().privateAmount()
             }
             .opacity(0.9)
             .padding(.horizontal, 12)
