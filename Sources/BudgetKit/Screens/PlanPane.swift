@@ -16,7 +16,7 @@ struct PlanPane: View {
         HStack(spacing: 0) {
             list.pane()
             if let editing {
-                SidePanel {
+                SidePanel(close: closeEditor) {
                     PlanItemEditor(draft: Binding { self.editing ?? editing } set: { self.editing = $0 },
                                    incomes: store.ledger().plan.filter { $0.kind == .income && $0.id != editing.id },
                                    month: month, isNew: isNew,

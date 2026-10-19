@@ -30,14 +30,18 @@ struct Drawer<Content: View>: View {
         .gesture(
             DragGesture(minimumDistance: 6)
                 .onChanged { pull = max(0, $0.translation.height) }
-                .onEnded { value in
-                    if Self.closes(dragged: value.translation.height, predicted: value.predictedEndTranslation.height) {
-                        close()
-                    } else {
-                        withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.change) { pull = 0 }
-                    }
-                }
+                .onEnded { value in settle(dragged: value.translation.height, predicted: value.predictedEndTranslation.height) }
         )
+        // Two fingers down on the trackpad do the same as a drag.
+        .swipeToClose(.down, pull: $pull) { settle(dragged: $0, predicted: $0) }
+    }
+
+    private func settle(dragged: CGFloat, predicted: CGFloat) {
+        if Self.closes(dragged: dragged, predicted: predicted) {
+            close()
+        } else {
+            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.change) { pull = 0 }
+        }
     }
 }
 

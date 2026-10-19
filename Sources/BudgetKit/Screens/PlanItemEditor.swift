@@ -21,7 +21,7 @@ struct PlanItemEditor: View {
             Text(isNew ? "NEW ITEM" : "EDIT ITEM").eyebrow()
             VStack(spacing: 8) {
                 line("Name") {
-                    GlassField(label: "Name", text: $draft.name, align: .trailing, hint: "Name", autofocus: isNew).frame(width: Kit.field)
+                    GlassField(label: "Name", text: $draft.name, align: .trailing, hint: "Name", autofocus: isNew, secret: false).frame(width: Kit.field)
                 }
                 line(draft.kind == .daily ? "A day" : "Amount") {
                     HStack(spacing: 6) {

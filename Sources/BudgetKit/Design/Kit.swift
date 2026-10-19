@@ -181,8 +181,12 @@ extension ButtonStyle where Self == SidebarItemStyle {
 }
 
 /// The editor beside a list, on the pane's right: a hairline before it and a faint glass behind.
+/// Two fingers to the right push it away, as it came in.
 struct SidePanel<Content: View>: View {
+    let close: () -> Void
     @ViewBuilder let content: Content
+    @State private var pull: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 0) {
@@ -195,5 +199,13 @@ struct SidePanel<Content: View>: View {
         }
         .frame(width: 320)
         .background(.white.opacity(0.025))
+        .offset(x: pull)
+        .swipeToClose(.right, pull: $pull) { travel in
+            if Drawer<EmptyView>.closes(dragged: travel, predicted: travel) {
+                close()
+            } else {
+                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.change) { pull = 0 }
+            }
+        }
     }
 }
