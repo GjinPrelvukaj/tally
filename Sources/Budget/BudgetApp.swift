@@ -19,6 +19,8 @@ struct BudgetApp: App {
     /// Amounts start hidden: as the setting says, or `--hidden` in the demo (which never reads the real app's settings).
     private let hidden: Bool
     private let demo: Bool
+    /// Locked right now: one for the window and the menu bar.
+    private let lock: TallyLock
 
     init() {
         let args = CommandLine.arguments
@@ -38,6 +40,7 @@ struct BudgetApp: App {
         screen = named.flatMap(Screen.init(named:)) ?? .today
         sheet = named.flatMap(OpenSheet.init(rawValue:))
         demo = args.contains("--demo")
+        lock = TallyLock(real: !args.contains("--demo"))
         hidden = demo ? args.contains("--hidden")
             : AmountsOnOpen.saved(in: .standard).startsHidden(lastHidden: UserDefaults.standard.bool(forKey: Preference.amountsHidden))
     }
@@ -48,7 +51,7 @@ struct BudgetApp: App {
                 switch opened {
                 case .success(let store): RootView(store: store, today: today, screen: screen, sheet: sheet, hidden: hidden,
                                                      real: !demo,
-                                                     demoPartner: "Sam")
+                                                     demoPartner: "Sam", lock: lock)
                 case .failure: OpenErrorView(path: Store.defaultURL.path)
                 }
             }
@@ -61,9 +64,9 @@ struct BudgetApp: App {
 
         // Quick log from the menu bar while Tally runs; none when the data couldn't be opened.
         MenuBarExtra(isInserted: .constant(store != nil)) {
-            if let store { MenuBarPanel(store: store, today: today, real: !demo, demoPartner: "Sam") }
+            if let store { MenuBarPanel(store: store, today: today, real: !demo, lock: lock, demoPartner: "Sam") }
         } label: {
-            if let store { MenuBarLabel(store: store, today: today, real: !demo) }
+            if let store { MenuBarLabel(store: store, today: today, real: !demo, lock: lock) }
         }
         .menuBarExtraStyle(.window)
     }

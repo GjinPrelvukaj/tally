@@ -2,27 +2,29 @@ import AppKit
 import SwiftUI
 
 /// Tally in the menu bar: what can be spent today beside the ring's symbol, and a click opens Quick log in a small panel,
-/// so a spend is logged without bringing the window forward. With the lock on it shows nothing of the money and only
+/// so a spend is logged without bringing the window forward. While Tally is locked it shows nothing of the money and only
 /// opens Tally, so it never gets round Touch ID; with amounts hidden the amount is left out.
 public struct MenuBarLabel: View {
     let store: Store
     let today: () -> Date
     /// The real app, not the demo: only it reads the lock and hidden amounts from the settings.
     let real: Bool
-    @AppStorage(Preference.lock) private var lockOn = false
+    /// Locked right now, as the window is.
+    let lock: TallyLock
     /// Read so the label changes with them (`AmountsOnOpen.hiddenOutsideWindow` decides).
     @AppStorage(Preference.amountsHidden) private var lastHidden = false
     @AppStorage(Preference.amountsOnOpen) private var onOpen = ""
 
-    public init(store: Store, today: @escaping () -> Date, real: Bool) {
+    public init(store: Store, today: @escaping () -> Date, real: Bool, lock: TallyLock) {
         self.store = store
         self.today = today
         self.real = real
+        self.lock = lock
     }
 
     public var body: some View {
         // ponytail: read when the store changes, not at midnight; the next log or opening the panel brings it up to date.
-        let shows = !(real && (lockOn || AmountsOnOpen.hiddenOutsideWindow(in: .standard))) && store.loadError == nil
+        let shows = !lock.isLocked && !(real && AmountsOnOpen.hiddenOutsideWindow(in: .standard)) && store.loadError == nil
         if shows, let allowance = store.ledger().allowance(today: today()) {
             Label(allowance.perDay.short, systemImage: "circle.dotted")
                 .labelStyle(.titleAndIcon)
@@ -37,25 +39,26 @@ public struct MenuBarPanel: View {
     let store: Store
     let today: () -> Date
     let real: Bool
+    let lock: TallyLock
     let demoPartner: String
-    @AppStorage(Preference.lock) private var lockOn = false
     @AppStorage(Preference.partnerName) private var savedPartner = ""
     @Environment(\.openWindow) private var openWindow
 
-    public init(store: Store, today: @escaping () -> Date, real: Bool, demoPartner: String = "") {
+    public init(store: Store, today: @escaping () -> Date, real: Bool, lock: TallyLock, demoPartner: String = "") {
         self.store = store
         self.today = today
         self.real = real
+        self.lock = lock
         self.demoPartner = demoPartner
     }
 
     public var body: some View {
         Group {
-            if (real && lockOn) || !store.isSetUp || store.loadError != nil {
+            if lock.isLocked || !store.isSetUp || store.loadError != nil {
                 // Nothing to log here: one line and the way in, in the middle.
                 VStack(spacing: Kit.Space.group) {
-                    Image(systemName: real && lockOn ? "lock" : "circle.dotted").font(.system(size: 20)).opacity(0.6)
-                    Text(real && lockOn ? "Tally is locked." : "Open Tally to start.").font(Kit.body).opacity(0.7)
+                    Image(systemName: lock.isLocked ? "lock" : "circle.dotted").font(.system(size: 20)).opacity(0.6)
+                    Text(lock.isLocked ? "Tally is locked." : "Open Tally to start.").font(Kit.body).opacity(0.7)
                     Button("Open Tally", action: openTally).buttonStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)

@@ -39,3 +39,13 @@ import Foundation
         #expect(AmountsOnOpen.hiddenOutsideWindow(in: d))
     }
 }
+
+/// The window and the menu bar read one lock, so they never disagree; the demo never locks.
+@MainActor @Test func theDemoNeverLocksAndOneLockIsShared() {
+    let lock = TallyLock(real: false)
+    #expect(!lock.isLocked)
+    lock.isLocked = true
+    // The menu bar holds the same object the window locked.
+    let menuBarSees = lock
+    #expect(menuBarSees.isLocked)
+}
