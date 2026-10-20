@@ -10,7 +10,9 @@ struct PlanItemDraft {
     var name: String
     var amount: String
     /// Changing what it is picks the pots that usually go with it.
-    var kind: PlanKind { didSet { if kind != oldValue { (from, to) = Self.pots(for: kind) } } }
+    var kind: PlanKind { didSet { if kind != oldValue { (from, to) = pots(for: kind) } } }
+    /// Where a transfer goes unless chosen: the first savings pot (set as the editor opens), else paying off the card.
+    var savingsPot: Pot = .card
     var from: Pot?
     var to: Pot?
     var when: When
@@ -51,10 +53,10 @@ struct PlanItemDraft {
         repeatMonth = month
     }
 
-    private static func pots(for kind: PlanKind) -> (from: Pot?, to: Pot?) {
+    private func pots(for kind: PlanKind) -> (from: Pot?, to: Pot?) {
         switch kind {
         case .income: (nil, .main)
-        case .transfer: (.main, .emergency)
+        case .transfer: (.main, savingsPot)
         case .payment, .daily: (.main, nil)
         }
     }

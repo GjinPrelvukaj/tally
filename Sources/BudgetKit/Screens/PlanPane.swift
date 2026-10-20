@@ -20,6 +20,7 @@ struct PlanPane: View {
                                        if self.editing?.id == draft.id { self.editing = draft }
                                    },
                                    incomes: store.ledger().plan.filter { $0.kind == .income && $0.id != editing.id },
+                                   potChoices: store.ledger().pots.map { ($0, store.ledger().name($0)) },
                                    month: month, isNew: isNew,
                                    wasIncome: store.ledger().plan.first { $0.id == editing.id }?.kind == .income,
                                    waiting: store.ledger().waiting(on: editing.id).count,
@@ -35,6 +36,8 @@ struct PlanPane: View {
     }
 
     private func open(_ draft: PlanItemDraft, new: Bool) {
+        var draft = draft
+        draft.savingsPot = store.ledger().pots.first(where: \.isSavings) ?? .card
         isNew = new
         withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { editing = draft }
     }
@@ -172,10 +175,11 @@ struct PlanPane: View {
         } else if item.repeatEvery > 1, let start = item.startsIn {
             parts.append("every \(item.repeatEvery) months from \(start.shortName)")
         }
+        let ledger = store.ledger()
         switch item.kind {
-        case .income: if let to = item.to { parts.append("into \(to.title)") }
-        case .transfer: if let from = item.from, let to = item.to { parts.append("\(from.title) → \(to.title)") }
-        case .payment, .daily: if let from = item.from { parts.append("from \(from.title)") }
+        case .income: if let to = item.to { parts.append("into \(ledger.name(to))") }
+        case .transfer: if let from = item.from, let to = item.to { parts.append("\(ledger.name(from)) → \(ledger.name(to))") }
+        case .payment, .daily: if let from = item.from { parts.append("from \(ledger.name(from))") }
         }
         if item.paused { parts.append("paused") }
         return parts.joined(separator: " · ")

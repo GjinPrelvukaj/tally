@@ -132,7 +132,7 @@ extension Entry {
         let shownCategory = kind == .spend && note != nil ? ledger.category(category)?.name : nil
         let pot = kind == .income || kind == .adjustment || kind == .repayment || kind == .borrowed ? to : from
         // Owed from before Tally moved no money: no pot to name.
-        let paid = !movesMoney && kind.isWithSomeone ? "from before" : method == .cash ? "Cash" : pot?.title
+        let paid = !movesMoney && kind.isWithSomeone ? "from before" : method == .cash ? "Cash" : pot.map(ledger.name)
         let together: String? = switch self.partner {
         case .with: "with \(partner)"
         case .half: "half \(partner)'s"

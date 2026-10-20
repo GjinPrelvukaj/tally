@@ -46,8 +46,9 @@ transfer to savings) is never counted as spendable. Below it, what's still to pa
 <td width="50%" valign="top">
 
 ### 🫙 Pots
-Each account as a tube of light: your main account, a clothes pot, an emergency fund with its goal and the
-month you'll reach it, and what you owe on the card. When pay arrives, one click splits it and you watch it pour.
+Each account as a tube of light: your main account, the pots you save up in (an emergency fund, a holiday, a car),
+each with its goal and the month you'll reach it, and what you owe on the card. When pay arrives, one click splits it
+and you watch it pour.
 
 </td>
 </tr>
@@ -100,7 +101,7 @@ month?"*. The on-device model only reads the question; Tally answers it from you
 
 ## Your own plan from the first minute
 
-On first launch Tally asks a few questions: what comes in, what you pay regularly, what you put aside, what's in
+On first launch Tally asks a few questions: what comes in, what you pay regularly, what you save up for, what's in
 each account right now and what's already paid this month. It makes your plan from the answers, and all of it can
 be changed later.
 

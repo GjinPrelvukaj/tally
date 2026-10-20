@@ -1,23 +1,24 @@
 import SwiftUI
 
-/// Settings, a section of its own in the sidebar (⌘,): Privacy, Categories and the Partner, one at a time behind a
+/// Settings, a section of its own in the sidebar (⌘,): Privacy, Pots, Categories and the Partner, one at a time behind a
 /// glass bar, each on quiet cards of rows. Privacy and the partner's name are kept in the app's preferences on this
-/// Mac (`Preference`); categories in the store, with the money.
+/// Mac (`Preference`); pots and categories in the store, with the money.
 struct SettingsView: View {
     let store: Store
     @State private var tab = Tab.privacy
 
-    enum Tab: Hashable { case privacy, categories, partner }
+    enum Tab: Hashable { case privacy, pots, categories, partner }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Kit.Space.edge) {
                 Text("SETTINGS").eyebrow()
-                GlassSegments(selection: $tab, choices: [(.privacy, "Privacy", "lock"), (.categories, "Categories", "tag"),
-                                                         (.partner, "Partner", "person.2")])
-                    .frame(maxWidth: 420)
+                GlassSegments(selection: $tab, choices: [(.privacy, "Privacy", "lock"), (.pots, "Pots", "cylinder.split.1x2"),
+                                                         (.categories, "Categories", "tag"), (.partner, "Partner", "person.2")])
+                    .frame(maxWidth: 520)
                 switch tab {
                 case .privacy: PrivacySettings()
+                case .pots: PotSettings(store: store)
                 case .categories: CategorySettings(store: store)
                 case .partner: PartnerSettings()
                 }

@@ -9,7 +9,9 @@ import Testing
         let draft = FirstRunDraft(month: october)
         #expect(draft.plan == [])
         #expect(draft.goals == [:])
-        #expect(draft.balances == [.main: .zero, .clothes: .zero, .emergency: .zero, .card: .zero])
+        // An emergency fund is suggested; no clothes pot is assumed.
+        #expect(draft.pots == [.main, .emergency, .card])
+        #expect(draft.balances == [.main: .zero, .emergency: .zero, .card: .zero])
         #expect(draft.items.isEmpty)
     }
 
@@ -56,20 +58,38 @@ import Testing
         #expect(draft.plan?.first?.schedule == .anyDay)
     }
 
-    @Test func savingsTheGoalAndEveryDay() throws {
+    @Test func savingsPotsOfTheirOwnTheirGoalsAndEveryDay() throws {
         var draft = FirstRunDraft(month: october)
         draft.incomeAmount = "2000"
-        draft.toEmergency = "300"
-        draft.toClothes = ""
-        draft.goal = "6 000"
+        draft.savings[0].monthly = "300"
+        draft.savings[0].goal = "6 000"
+        draft.addPot("Holiday")
+        draft.savings[1].goal = "1 200"
         draft.daily = "15"
         let plan = try #require(draft.plan)
         let saving = try #require(plan.first { $0.kind == .transfer })
-        #expect(saving.from == .main && saving.to == .emergency && saving.amount == .euros(300))
+        #expect(saving.from == .main && saving.to == .emergency && saving.amount == .euros(300) && saving.name == "Emergency fund")
         #expect(saving.schedule == .withIncome(plan[0].id))
-        #expect(!plan.contains { $0.to == .clothes })
+        // Nothing going into the holiday pot each month: no plan item, but the pot and its goal are kept.
+        let holiday = draft.savings[1].pot
+        #expect(!plan.contains { $0.to == holiday.id })
+        #expect(draft.savingsPots.map(\.name) == ["Emergency fund", "Holiday"])
+        #expect(holiday.colour != draft.savings[0].pot.colour)
+        #expect(draft.pots == [.main, .emergency, holiday.id, .card])
         #expect(plan.last?.kind == .daily && plan.last?.amount == .euros(15))
-        #expect(draft.goals == [.emergency: .euros(6000)])
+        #expect(draft.goals == [.emergency: .euros(6000), holiday.id: .euros(1200)])
+    }
+
+    @Test func aNamelessPotIsIgnoredUntilItHasMoneyOrAGoal() {
+        var draft = FirstRunDraft(month: october)
+        draft.savings = []
+        draft.addPot("")
+        #expect(draft.plan == [] && draft.savingsPots.isEmpty && draft.pots == [.main, .card])
+        draft.savings[0].monthly = "50"
+        #expect(draft.plan == nil)
+        draft.savings[0].pot.name = " Car "
+        #expect(draft.plan?.first?.name == "Car")
+        #expect(draft.savingsPots.first?.name == "Car")
     }
 
     @Test func aTypoOrANamelessCostStopsIt() {
@@ -85,7 +105,7 @@ import Testing
         #expect(draft.plan == nil)
         draft.costs[0].name = "Bills"
         #expect(draft.plan != nil)
-        draft.goal = "lots"
+        draft.savings[0].goal = "lots"
         #expect(draft.goals == nil)
     }
 
@@ -95,11 +115,11 @@ import Testing
         draft.typed[.main] = "150"
         #expect(draft.balances?[.card] == Cents(-6340))
         #expect(draft.balances?[.main] == .euros(150))
-        #expect(draft.balances?[.clothes] == .zero)
-        draft.typed[.clothes] = "1o"
+        #expect(draft.balances?[.emergency] == .zero)
+        draft.typed[.emergency] = "1o"
         #expect(draft.balances == nil)
         // Overdrawn, and the card in credit (paid more than was owed).
-        draft.typed[.clothes] = ""
+        draft.typed[.emergency] = ""
         draft.typed[.main] = "-20"
         draft.typed[.card] = "-4,30"
         #expect(draft.balances?[.main] == Cents(-2000))
@@ -114,7 +134,7 @@ import Testing
         draft.addCost("Phone")
         draft.costs[1].amount = "20"
         draft.costs[1].day = 25
-        draft.toEmergency = "300"
+        draft.savings[0].monthly = "300"
         draft.daily = "20"
         draft.tickWhatHasPassed(today: 19)
         let plan = try #require(draft.plan)

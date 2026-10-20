@@ -1,16 +1,68 @@
 import Foundation
 
-/// A place the money sits. Only Main is spent from day to day.
-public enum Pot: String, Codable, CaseIterable, Sendable {
-    case main, clothes, emergency, card
+/// A place the money sits, by the id entries, the plan and balances keep. Main is spent from day to day and the card
+/// is a debt; every other pot is a savings pot of the person's own (`SavingsPot`: its name, colour and goal).
+public struct Pot: RawRepresentable, Hashable, Codable, Sendable {
+    public var rawValue: String
 
+    public init(rawValue: String) { self.rawValue = rawValue }
+    public init(_ id: String) { rawValue = id }
+
+    /// Kept as its id alone, as the enum it once was.
+    public init(from decoder: Decoder) throws { rawValue = try decoder.singleValueContainer().decode(String.self) }
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
+
+    public static let main = Pot("main")
+    public static let card = Pot("card")
+    /// The two savings pots Tally began with; data saved before pots of your own has them.
+    public static let clothes = Pot("clothes")
+    public static let emergency = Pot("emergency")
+
+    /// A savings pot: neither Main nor the card.
+    public var isSavings: Bool { self != .main && self != .card }
+
+    /// Its name when nothing else names it (`Ledger.name(_:)` knows a savings pot's own).
     public var title: String {
         switch self {
         case .main: "Main"
+        case .card: "Credit card"
         case .clothes: "Clothes"
         case .emergency: "Emergency fund"
-        case .card: "Credit card"
+        default: rawValue
         }
+    }
+}
+
+/// A savings pot of the person's own. Retired ones are no longer shown or offered, but their entries keep them.
+public struct SavingsPot: Identifiable, Hashable, Codable, Sendable {
+    public var id: Pot
+    public var name: String
+    /// Which of the app's pot colours it has.
+    public var colour: Int
+    public var retired: Bool
+
+    public init(id: Pot = Pot(UUID().uuidString), name: String, colour: Int, retired: Bool = false) {
+        self.id = id
+        self.name = name
+        self.colour = colour
+        self.retired = retired
+    }
+
+    /// The colours Main and the card keep; a savings pot has one of the others.
+    public static let mainColour = 0, cardColour = 3
+    /// The colours a new pot takes, in turn.
+    public static let colours = [2, 1, 4, 5, 6, 7]
+
+    /// What data saved before pots of your own has: Clothes and the Emergency fund, in their old colours.
+    public static let original = [SavingsPot(id: .clothes, name: "Clothes", colour: 1),
+                                  SavingsPot(id: .emergency, name: "Emergency fund", colour: 2)]
+
+    /// The next colour no pot in `pots` has yet (round again once all are taken).
+    public static func nextColour(after pots: [SavingsPot]) -> Int {
+        colours.first { colour in !pots.contains { $0.colour == colour } } ?? colours[pots.count % colours.count]
     }
 }
 

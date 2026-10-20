@@ -128,12 +128,12 @@ extension Ledger {
     }
 
     private func balances() -> (String, [String]) {
-        let lines = Pot.allCases.map { pot -> String in
-            guard pot == .card else { return "\(pot.title) \(balance(pot).formatted)" }
+        let lines = pots.map { pot -> String in
+            guard pot == .card else { return "\(name(pot)) \(balance(pot).formatted)" }
             let owed = Pot.card.figure(for: balance(.card))
-            return owed > .zero ? "\(pot.title): you owe \(owed.formatted)" : "\(pot.title): paid off"
+            return owed > .zero ? "\(name(pot)): you owe \(owed.formatted)" : "\(name(pot)): paid off"
         }
-        return ("\(total.formatted) across four pots", lines)
+        return ("\(total.formatted) across \(potCount)", lines)
     }
 
     private func dailyAmount(today: Date) -> (String, [String]) {

@@ -61,8 +61,12 @@ import Testing
         #expect(try #require(draft.item).to == .main)
         #expect(try #require(draft.item).from == nil)
         draft.kind = .transfer
-        let transfer = try #require(draft.item)
-        #expect(transfer.from == .main && transfer.to != nil && transfer.to != .main)
+        // With no savings pot to go to, it pays off the card.
+        #expect(try #require(draft.item).from == .main && draft.item?.to == .card)
+        draft.kind = .payment
+        draft.savingsPot = Pot("holiday")
+        draft.kind = .transfer
+        #expect(try #require(draft.item).to == Pot("holiday"))
         draft.kind = .daily
         #expect(try #require(draft.item).schedule == .anyDay)
     }

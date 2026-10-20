@@ -172,15 +172,22 @@ enum SchemaV3: VersionedSchema {
 /// How often a plan item comes (`PlanItemRecord.repeatEvery`, `startsInYear`, `startsInMonth`).
 enum SchemaV4: VersionedSchema {
     static let versionIdentifier = Schema.Version(4, 0, 0)
+    static var models: [any PersistentModel.Type] { [PlanItemRecord.self, EntryRecord.self, SchemaV1.SettingsRecord.self, CategoryRecord.self] }
+}
+
+/// Pots of your own (`SettingsRecord.pots`). The rest as before.
+enum SchemaV5: VersionedSchema {
+    static let versionIdentifier = Schema.Version(5, 0, 0)
     static var models: [any PersistentModel.Type] { [PlanItemRecord.self, EntryRecord.self, SettingsRecord.self, CategoryRecord.self] }
 }
 
 /// Only things added, nothing renamed or removed, so SwiftData moves the file itself, a version at a time.
 enum TallyMigration: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self] }
+    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self] }
     static var stages: [MigrationStage] {
         [.lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self),
          .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self),
-         .lightweight(fromVersion: SchemaV3.self, toVersion: SchemaV4.self)]
+         .lightweight(fromVersion: SchemaV3.self, toVersion: SchemaV4.self),
+         .lightweight(fromVersion: SchemaV4.self, toVersion: SchemaV5.self)]
     }
 }

@@ -185,7 +185,7 @@ public struct RootView: View {
             QuickLogSheet(categories: offered, last: offered.first { $0.id == ledger.lastSpendCategory } ?? offered.first ?? .other,
                           log: log, cancel: close)
         case .balance(let pot):
-            SetBalanceSheet(pot: pot, balance: store.ledger().balance(pot),
+            SetBalanceSheet(pot: pot, name: store.ledger().name(pot), light: store.ledger().light(pot), balance: store.ledger().balance(pot),
                             set: { store.setBalance(pot, to: $0, at: today()); close() }, cancel: close)
         case .money(let who):
             let ledger = store.ledger()

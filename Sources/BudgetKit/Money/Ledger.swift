@@ -10,15 +10,50 @@ public struct Ledger: Sendable {
     public var calendar: Calendar
     /// Every category, retired ones too, in the order they are offered.
     public var categories: [Category]
+    /// The savings pots of the person's own, retired ones too, in their order.
+    public var savings: [SavingsPot]
+    /// What a pot is saving up to.
+    public var goals: [Pot: Cents]
 
     public init(start: [Pot: Cents], startMonth: YearMonth, plan: [PlanItem], entries: [Entry], calendar: Calendar,
-                categories: [Category] = Category.starters) {
+                categories: [Category] = Category.starters, savings: [SavingsPot] = SavingsPot.original, goals: [Pot: Cents] = [:]) {
         self.start = start
         self.startMonth = startMonth
         self.plan = plan
         self.entries = entries
         self.calendar = calendar
         self.categories = categories
+        self.savings = savings
+        self.goals = goals
+    }
+
+    /// The pots shown and offered: Main, each savings pot not retired, the card.
+    public var pots: [Pot] { [.main] + savings.filter { !$0.retired }.map(\.id) + [.card] }
+
+    /// Where a spend in a category can come out of: Main or a savings pot (the card is chosen per spend).
+    public var spendingPots: [Pot] { pots.filter { $0 != .card } }
+
+    /// "four pots": how many are shown, in words up to ten.
+    public var potCount: String {
+        let words = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+        let n = pots.count
+        return "\(n < words.count ? words[n] : String(n)) pot\(n == 1 ? "" : "s")"
+    }
+
+    /// A savings pot can be retired when nothing is left in it and nothing in the plan moves money into or out of it,
+    /// so no money is ever hidden and nothing planned points at a pot no longer shown.
+    public func canRetire(_ pot: Pot) -> Bool {
+        pot.isSavings && balance(pot) == .zero && !plan.contains { $0.from == pot || $0.to == pot }
+    }
+
+    /// A savings pot's own name; Main's, the card's, or a pot no longer known by its id.
+    public func name(_ pot: Pot) -> String {
+        savings.first { $0.id == pot }?.name ?? pot.title
+    }
+
+    /// Its colour, of the app's few (`SavingsPot.colours`).
+    public func colour(_ pot: Pot) -> Int {
+        pot == .main ? SavingsPot.mainColour : pot == .card ? SavingsPot.cardColour : savings.first { $0.id == pot }?.colour ?? SavingsPot.colours[0]
     }
 
     /// The category a spend names. One whose key is no longer known still has a name: "Other".
@@ -35,7 +70,7 @@ public struct Ledger: Sendable {
 
     /// Everything in the pots, with the card's debt taken off.
     public var total: Cents {
-        Pot.allCases.reduce(.zero) { $0 + balance($1) }
+        ([.main, .card] + savings.map(\.id)).reduce(.zero) { $0 + balance($1) }
     }
 
     /// The category of the newest spend (by when it happened): where Quick log starts. Kept in the data, so it is the same

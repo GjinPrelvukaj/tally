@@ -27,7 +27,4 @@ public struct Category: Identifiable, Hashable, Codable, Sendable {
 
     /// The categories every Tally starts with, in this order.
     public static let starters = [food, goingOut, clothes, fragrance, other]
-
-    /// The pots a category can come out of: the card is chosen per spend, not per category.
-    public static let pots: [Pot] = [.main, .clothes, .emergency]
 }

@@ -5,6 +5,8 @@ struct PlanItemEditor: View {
     @Binding var draft: PlanItemDraft
     /// The other incomes an item can wait for.
     let incomes: [PlanItem]
+    /// Every pot shown, named, for where money comes from and goes to.
+    let potChoices: [(Pot, String)]
     let month: YearMonth
     let isNew: Bool
     /// Whether it is an income now, and how many items wait for it: changing or deleting it moves them to "any day".
@@ -124,7 +126,7 @@ struct PlanItemEditor: View {
     }
 
     private func pots(_ pot: Binding<Pot?>) -> some View {
-        pick(pot, Pot.allCases.map { ($0 as Pot?, $0.title) })
+        pick(pot, potChoices.map { ($0.0 as Pot?, $0.1) })
     }
 
     /// A pop-up of named choices, in the order given.

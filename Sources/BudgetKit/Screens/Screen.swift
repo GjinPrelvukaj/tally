@@ -50,22 +50,24 @@ public enum Screen: Int, CaseIterable, Sendable {
         case .insights: [.hex(0xFBBF24), .hex(0xA78BFA), .hex(0xFBBF24)]
         case .settings: [.hex(0x94A3B8), Pot.main.light, .hex(0x94A3B8)]
         case .people: [.hex(0xF472B6), .arrived, .hex(0xF472B6)]
-        case .pots: Pot.allCases.map(\.light)
+        case .pots: [Pot.palette[0], Pot.palette[1], Pot.palette[2], Pot.palette[3]]
         case .month: [.hex(0xA78BFA), .hex(0xA78BFA), .ahead]
         }
     }
 }
 
 extension Pot {
+    /// The pots' colours, by `SavingsPot.colour`: blue for Main, yellow for the card, the rest for savings pots.
+    static let palette: [Color] = [.hex(0x60A5FA), .hex(0xF472B6), .arrived, .hex(0xFBBF24),
+                                   .hex(0xA78BFA), .hex(0xFB923C), .ahead, .hex(0xF87171)]
+
+    /// Main's and the card's colours, which never change; a savings pot's is `Ledger.light(_:)`.
+    var light: Color { Pot.palette[self == .card ? SavingsPot.cardColour : SavingsPot.mainColour] }
+}
+
+extension Ledger {
     /// Each pot's own colour: its light on Pots, its tube.
-    var light: Color {
-        switch self {
-        case .main: .hex(0x60A5FA)
-        case .clothes: .hex(0xF472B6)
-        case .emergency: .arrived
-        case .card: .hex(0xFBBF24)
-        }
-    }
+    func light(_ pot: Pot) -> Color { Pot.palette[colour(pot) % Pot.palette.count] }
 }
 
 extension Color {

@@ -28,7 +28,7 @@ struct MonthView: View {
             ScrollView(.vertical) {
                 LazyVStack(spacing: 0) {
                     ForEach(months, id: \.self) { month in
-                        MonthPage(ledger: ledger, month: month, today: today, goal: store.goal(.emergency))
+                        MonthPage(ledger: ledger, month: month, today: today)
                             .containerRelativeFrame(.vertical)
                             .id(month)
                     }
@@ -80,7 +80,6 @@ private struct MonthPage: View {
     let ledger: Ledger
     let month: YearMonth
     let today: Date
-    let goal: Cents?
 
     var body: some View {
         let calendar = ledger.calendar
@@ -94,9 +93,13 @@ private struct MonthPage: View {
             VStack(spacing: 0) {
                 if let end = line.last { row("Left at end of month", end.balance.formatted) }
                 row(todayDay == nil ? "Saved" : "Saved this month", ledger.saved(in: month).formatted)
-                // Where the fund is heading is about now, so only the current month says it.
-                if todayDay != nil, let goal, let reached = ledger.goalMonth(.emergency, goal: goal, today: today) {
-                    row("Emergency fund", reached.shortName)
+                // Where each pot with a goal is heading is about now, so only the current month says it.
+                if todayDay != nil {
+                    ForEach(ledger.pots.filter { ledger.goals[$0] != nil }, id: \.self) { pot in
+                        if let goal = ledger.goals[pot], let reached = ledger.goalMonth(pot, goal: goal, today: today) {
+                            row(ledger.name(pot), reached.shortName)
+                        }
+                    }
                 }
             }
             .padding(.top, 8)
