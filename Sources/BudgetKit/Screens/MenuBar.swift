@@ -10,7 +10,9 @@ public struct MenuBarLabel: View {
     /// The real app, not the demo: only it reads the lock and hidden amounts from the settings.
     let real: Bool
     @AppStorage(Preference.lock) private var lockOn = false
-    @AppStorage(Preference.amountsHidden) private var hidden = false
+    /// Read so the label changes with them (`AmountsOnOpen.hiddenOutsideWindow` decides).
+    @AppStorage(Preference.amountsHidden) private var lastHidden = false
+    @AppStorage(Preference.amountsOnOpen) private var onOpen = ""
 
     public init(store: Store, today: @escaping () -> Date, real: Bool) {
         self.store = store
@@ -20,7 +22,7 @@ public struct MenuBarLabel: View {
 
     public var body: some View {
         // ponytail: read when the store changes, not at midnight; the next log or opening the panel brings it up to date.
-        let shows = !(real && (lockOn || hidden)) && store.loadError == nil
+        let shows = !(real && (lockOn || AmountsOnOpen.hiddenOutsideWindow(in: .standard))) && store.loadError == nil
         if shows, let allowance = store.ledger().allowance(today: today()) {
             Label(allowance.perDay.short, systemImage: "circle.dotted")
                 .labelStyle(.titleAndIcon)

@@ -158,7 +158,7 @@ Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's d
 Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid);
                                       while amounts are hidden an amount field shows a bar until clicked or typed into (`secret: false` for a name or note)
 Sources/BudgetKit/Screens/MenuBar.swift  Tally in the menu bar while it runs (`MenuBarExtra` in BudgetApp): `MenuBarLabel` shows the amount a day beside
-                                      the ring's symbol (only the symbol with amounts hidden or the lock on); `MenuBarPanel` is Quick log on the black glass,
+                                      the ring's symbol (only the symbol whenever the window would hide amounts, `AmountsOnOpen.hiddenOutsideWindow`, or the lock is on); `MenuBarPanel` is Quick log on the black glass,
                                       and Open Tally (with the lock on, only Open Tally)
 Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, the category chips (three a row, retired ones left out; a tap only chooses, the newest spend's to begin with: `Ledger.lastSpendCategory`, so it holds across launches), Bank Card /
                                       Credit Card / Cash (`PaymentMethodPicker`), the partner (when named), the note (`NoteField`); Log (or Return) saves
