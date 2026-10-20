@@ -98,6 +98,12 @@ import Testing
         #expect(draft.balances?[.clothes] == .zero)
         draft.typed[.clothes] = "1o"
         #expect(draft.balances == nil)
+        // Overdrawn, and the card in credit (paid more than was owed).
+        draft.typed[.clothes] = ""
+        draft.typed[.main] = "-20"
+        draft.typed[.card] = "-4,30"
+        #expect(draft.balances?[.main] == Cents(-2000))
+        #expect(draft.balances?[.card] == Cents(430))
     }
 
     @Test func whatHasPassedThisMonthStartsTicked() throws {

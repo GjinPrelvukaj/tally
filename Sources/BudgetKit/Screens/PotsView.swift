@@ -68,7 +68,9 @@ struct PotsView: View {
                 let balance = ledger.balance(pot)
                 let paidOff = pot == .card && balance == .zero
                 VStack(spacing: 8) {
-                    Text(paidOff ? "Paid off" : balance.formatted)
+                    // The card paid past what it owed is in credit; a pot below zero is overdrawn, in red.
+                    Text(paidOff ? "Paid off" : pot == .card && balance > .zero ? "\(balance.formatted) in credit" : balance.formatted)
+                        .foregroundStyle(pot != .card && balance < .zero ? Color.red : .white)
                         .privateAmount(!paidOff)
                         .font(.system(size: 12)).monospacedDigit()
                         .lineLimit(1).minimumScaleFactor(0.6)
