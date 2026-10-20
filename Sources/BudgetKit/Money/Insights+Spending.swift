@@ -91,11 +91,14 @@ extension Ledger {
             }
             .sorted { (abs($0.1.value - $0.2.value), $0.0) > (abs($1.1.value - $1.2.value), $1.0) }
             .prefix(2)
-            .map { id, this, then in
+            // Typed out, and the title in parts: the compiler on GitHub's runners gave up working it out.
+            .map { (id: String, this: Cents, then: Cents) -> Insight in
                 let name = category(id)?.name ?? Category.other.name
                 let up = this > then
+                let change = Cents(abs(this.value - then.value)).formatted
+                let way = up ? "up" : "down"
                 return Insight(id: "month-\(id)", kind: .month, level: up ? .notice : .good,
-                               title: "\(name) is \(up ? "up" : "down") \(Cents(abs(this.value - then.value)).formatted) on last month",
+                               title: "\(name) is \(way) \(change) on last month",
                                detail: "\(this.formatted) by the \(ordinal(day)), against \(then.formatted) by the \(ordinal(lastDay)) of \(last.name).")
             }
     }
