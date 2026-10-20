@@ -20,8 +20,6 @@ public struct RootView: View {
     @State private var payday: Due?
     /// The quick log, set-balance or paid-back card, when one is open.
     @State private var sheet: Sheet?
-    /// The category Return logs under in the quick log: the one used last.
-    @State private var lastCategory = Category.food
     /// The partner's name from Settings; the demo has its own (`demoPartner`), so it never shows the real one.
     @AppStorage(Preference.partnerName) private var savedPartner = ""
     let demoPartner: String
@@ -184,7 +182,7 @@ public struct RootView: View {
             let ledger = store.ledger()
             let offered = ledger.categories.filter { !$0.retired }
             // The one used last, unless it has since been retired.
-            QuickLogSheet(categories: offered, last: offered.first { $0.id == lastCategory.id } ?? offered.first ?? .other,
+            QuickLogSheet(categories: offered, last: offered.first { $0.id == ledger.lastSpendCategory } ?? offered.first ?? .other,
                           log: log, cancel: close)
         case .balance(let pot):
             SetBalanceSheet(pot: pot, balance: store.ledger().balance(pot),
@@ -253,7 +251,6 @@ public struct RootView: View {
     private func log(_ spend: LoggedSpend) {
         store.logSpend(spend.amount, category: spend.category, note: spend.note, paidWith: spend.method, at: today(),
                        partner: spend.partner, paysBack: spend.paysBack)
-        lastCategory = spend.category
         close()
     }
 
