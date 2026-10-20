@@ -27,6 +27,9 @@ struct EntriesPane: View {
                                 },
                                 title: editing.original.title(ledger: ledger, partner: partnerName),
                                 categories: ledger.categories.filter { !$0.retired || $0.id == editing.category.id },
+                                held: ledger.setBalancesHeld(changing: editing.original, to: nil).compactMap { set in
+                                    set.to.map { "\(ledger.name($0)) stays at what you set on the \(ordinal(ledger.calendar.component(.day, from: set.date)))." }
+                                },
                                 save: { store.update($0); closeEditor() },
                                 delete: { store.deleteEntry(editing.original.id); closeEditor() },
                                 cancel: closeEditor)

@@ -204,17 +204,27 @@ public final class Store {
         guard entry.amount > .zero || entry.kind == .adjustment,
               let records = attempt({ try context.fetch(FetchDescriptor<EntryRecord>()) }),
               let record = records.first(where: { $0.id == entry.id }) else { return }
+        holdSetBalances(changing: record.value, to: entry, in: records)
         record.apply(entry)
         commit()
     }
 
-    /// Gone, as if it never happened: a paid plan item is due again.
+    /// Gone, as if it never happened: a paid plan item is due again. A balance set after it stays as it was set.
     public func deleteEntry(_ id: UUID) {
         guard let records = attempt({ try context.fetch(FetchDescriptor<EntryRecord>()) }) else { return }
+        if let record = records.first(where: { $0.id == id }) { holdSetBalances(changing: record.value, to: nil, in: records) }
         records.filter { $0.id == id }.forEach(context.delete)
         // Undo goes by the ids of the last action; with one of them gone it no longer takes back all of it.
         if undoable.contains(id) { undoable = [] }
         commit()
+    }
+
+    /// Writes the set balances `Ledger.setBalancesHeld` changes, so a pot set by hand still shows what was set.
+    private func holdSetBalances(changing old: Entry, to new: Entry?, in records: [EntryRecord]) {
+        guard let ledger = currentLedger() else { return }
+        for set in ledger.setBalancesHeld(changing: old, to: new) {
+            records.first { $0.id == set.id }?.apply(set)
+        }
     }
 
     /// Adds a new plan item at the end, or replaces an existing one in its place.
