@@ -71,7 +71,7 @@ struct TodayView: View {
     }
 }
 
-/// Today's spends, newest first: what it was and how much.
+/// Today's spends, newest first: when, what it was and how much.
 private struct SpentToday: View {
     let entries: [Entry]
     let ledger: Ledger
@@ -84,6 +84,7 @@ private struct SpentToday: View {
             }
             ForEach(entries) { entry in
                 HStack(spacing: 8) {
+                    Text(TimeOfDay(entry.date, calendar: ledger.calendar).formatted).font(Kit.quiet).monospacedDigit().opacity(0.4)
                     Text(entry.note ?? ledger.category(entry.category)?.name ?? "").lineLimit(1)
                     if entry.from == .card || entry.method == .cash {
                         Text(entry.method == .cash ? "Cash" : "Card").font(Kit.quiet).opacity(0.4)

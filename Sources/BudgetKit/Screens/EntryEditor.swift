@@ -26,6 +26,12 @@ struct EntryEditor: View {
             } else {
                 AmountField(label: title, text: $draft.amount,
                             valid: draft.amountCents != nil)
+                // When on its day it happened, for one logged later than that.
+                HStack(spacing: Kit.Space.item) {
+                    Text("Time").font(Kit.body).opacity(0.55)
+                    GlassField(label: "Time", text: $draft.time, valid: TimeOfDay(draft.time) != nil, hint: "18:30", secret: false)
+                        .frame(width: Kit.rowAmount)
+                }
             }
             if draft.isSpend {
                 // In Quick log's order: what it was for, how it was paid, who with, a note.

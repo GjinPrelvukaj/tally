@@ -130,7 +130,7 @@ extension Entry {
         }
     }
 
-    /// "the 19th · Food · Credit card · with Ana" ("Cash" in place of the pot when paid in cash).
+    /// "the 19th, 18:13 · Food · Credit card · with Ana" ("Cash" in place of the pot when paid in cash).
     func detail(ledger: Ledger, partner: String) -> String {
         let shownCategory = kind == .spend && note != nil ? ledger.category(category)?.name : nil
         let pot = kind == .income || kind == .adjustment || kind == .repayment || kind == .borrowed ? to : from
@@ -142,7 +142,8 @@ extension Entry {
         case .forThem: "for \(partner)"
         case nil: nil
         }
-        return (["the \(ordinal(ledger.calendar.component(.day, from: date)))", shownCategory, paid, partner.isEmpty ? nil : together] as [String?])
+        let when = "the \(ordinal(ledger.calendar.component(.day, from: date))), \(TimeOfDay(date, calendar: ledger.calendar).formatted)"
+        return ([when, shownCategory, paid, partner.isEmpty ? nil : together] as [String?])
             .compactMap { $0 }.joined(separator: " · ")
     }
 
