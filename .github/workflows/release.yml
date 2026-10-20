@@ -20,13 +20,27 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 45
     steps:
+      # A release already made from a Mac (Scripts/release.sh, then gh release create) needs nothing more here.
+      - name: Already released?
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::notice::$GITHUB_REF_NAME is already released."
+            echo "done=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v7
+        if: steps.check.outputs.done != 'true'
 
       - name: Test
+        if: steps.check.outputs.done != 'true'
         run: swift test
 
       # A keychain of its own for this run, holding the certificate and the notary's login; gone with the runner.
       - name: Signing
+        if: steps.check.outputs.done != 'true'
         env:
           CERTIFICATE: ${{ secrets.DEVELOPER_ID_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
@@ -52,6 +66,7 @@ jobs:
           echo "TALLY_NOTARY_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
 
       - name: Build, sign and notarize
+        if: steps.check.outputs.done != 'true'
         env:
           TALLY_NOTARY_PROFILE: tally-notary
         run: |
@@ -61,6 +76,7 @@ jobs:
           cp "build/Tally-$VERSION.dmg" build/Tally.dmg
 
       - name: Publish
+        if: steps.check.outputs.done != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" build/Tally.dmg --title "Tally ${GITHUB_REF_NAME#v}" --notes-from-tag --verify-tag
