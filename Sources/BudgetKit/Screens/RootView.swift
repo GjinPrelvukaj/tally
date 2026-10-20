@@ -34,7 +34,8 @@ public struct RootView: View {
     let real: Bool
     @AppStorage(Preference.lock) private var lockOn = false
     /// Nothing of the money is drawn until Touch ID says it is you.
-    @State private var locked: Bool
+    /// Shared with the menu bar.
+    let lock: TallyLock
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
@@ -42,13 +43,13 @@ public struct RootView: View {
     /// `hidden` starts with every amount hidden (the setting, or the demo's `--hidden`).
     /// `real` is false in the demo; when true, Tally starts locked if the setting is on.
     public init(store: Store, today: @escaping () -> Date, screen: Screen = .today, sheet: OpenSheet? = nil,
-                hidden: Bool = false, real: Bool = false, demoPartner: String = "") {
+                hidden: Bool = false, real: Bool = false, demoPartner: String = "", lock: TallyLock) {
         self.store = store
+        self.lock = lock
         self.demoPartner = demoPartner
         self.today = today
         self.real = real
         _amountsHidden = State(initialValue: hidden)
-        _locked = State(initialValue: real && UserDefaults.standard.bool(forKey: Preference.lock))
         _section = State(initialValue: screen)
         _day = State(initialValue: today())
         _payday = State(initialValue: sheet == .payday ? store.ledger().stillToPay(today: today()).first(where: \.isIncome) : nil)
@@ -60,8 +61,8 @@ public struct RootView: View {
 
     public var body: some View {
         Group {
-            if locked {
-                LockView { withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { locked = false } }
+            if lock.isLocked {
+                LockView { withAnimation(reduceMotion ? .easeOut(duration: 0.15) : Motion.appear) { lock.isLocked = false } }
             } else if store.isSetUp {
                 ZStack {
                     HStack(spacing: 0) {
@@ -85,7 +86,7 @@ public struct RootView: View {
         // Opens at the standard size; never smaller than the minimum.
         .frame(minWidth: WindowSize.minimum.width, idealWidth: WindowSize.standard.width, maxWidth: .infinity,
                minHeight: WindowSize.minimum.height, idealHeight: WindowSize.standard.height, maxHeight: .infinity)
-        .background { if !locked { shortcuts } }
+        .background { if !lock.isLocked { shortcuts } }
         .background {
             Glass(light: store.isSetUp ? Screen.allCases.map(\.light) : [Screen.today.light],
                   position: store.isSetUp ? Double(section.rawValue) : 0)
@@ -202,7 +203,7 @@ public struct RootView: View {
         guard real, lockOn else { return }
         payday = nil
         sheet = nil
-        locked = true
+        lock.isLocked = true
     }
 
     private func toggleAmounts() {
