@@ -50,17 +50,25 @@ public struct MenuBarPanel: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: Kit.Space.group) {
+        Group {
             if (real && lockOn) || !store.isSetUp || store.loadError != nil {
-                Text(real && lockOn ? "Tally is locked." : "Open Tally to start.").font(Kit.body).opacity(0.7)
+                // Nothing to log here: one line and the way in, in the middle.
+                VStack(spacing: Kit.Space.group) {
+                    Image(systemName: real && lockOn ? "lock" : "circle.dotted").font(.system(size: 20)).opacity(0.6)
+                    Text(real && lockOn ? "Tally is locked." : "Open Tally to start.").font(Kit.body).opacity(0.7)
+                    Button("Open Tally", action: openTally).buttonStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
             } else {
-                let choices = QuickLogSheet.choices(store.ledger())
-                QuickLogSheet(categories: choices.categories, last: choices.last, log: log, cancel: closePanel)
-                    .environment(\.partnerName, real ? savedPartner : demoPartner)
-                    // A new panel each time it opens, so it starts empty on the category used last.
-                    .id(store.recordings)
+                VStack(alignment: .leading, spacing: Kit.Space.group) {
+                    let choices = QuickLogSheet.choices(store.ledger())
+                    QuickLogSheet(categories: choices.categories, last: choices.last, log: log, cancel: closePanel)
+                        .environment(\.partnerName, real ? savedPartner : demoPartner)
+                        // A new panel each time it opens, so it starts empty on the category used last.
+                        .id(store.recordings)
+                    Button("Open Tally", action: openTally).buttonStyle(.quiet)
+                }
             }
-            Button("Open Tally", action: openTally).buttonStyle(.quiet)
         }
         .padding(Kit.Space.edge)
         .padding(.bottom, Glass.lightRoom - Kit.Space.edge)
