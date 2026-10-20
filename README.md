@@ -86,7 +86,7 @@ started. Share a spend with your partner and Tally keeps what they owe you.
 </tr>
 </table>
 
-**Log a spend** in a couple of seconds: an amount, a category, bank card, credit card or cash, done. Any entry can
+**Log a spend** in a couple of seconds, from the window or straight from the menu bar: an amount, a category, bank card, credit card or cash, done. Any entry can
 be changed or deleted later, and the last thing you recorded can be undone.
 
 **Ask Tally.** On a Mac with Apple Intelligence you can ask things like *"what did I spend on coffee with Sam this
