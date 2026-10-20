@@ -22,7 +22,7 @@ middle: Quick log, a payday, Set Balance, Paid Back; the first run. See `docs/ma
 Undo takes back the last recorded action. A style kit (`Design/Kit.swift`) holds every size, button and switch.
 Privacy: every amount can be hidden at once, and Tally can lock behind Touch ID (Settings, ⌘,).
 
-**Not done yet:** typing a negative balance (an overdrawn account, a card in credit); pots of your own
+**Not done yet:** pots of your own
 (they are fixed: Main, Clothes, Emergency fund, Card).
 
 **Not checked by hand yet** (keys and clicks don't reach a demo started from a script): clicking the sidebar,
@@ -183,7 +183,9 @@ persists; the file is `~/Library/Application Support/Budget/Budget.store`), `Des
   U+00A0, comma decimals, U+00A0 then `€`; negative as `−45,00 €` (U+2212). Formatting is by hand, not
   `NumberFormatter`, so it never follows the system locale.
 - `Cents.parse` takes `12,5`, `12.50`, ` 12 `, `2 400` and refuses letters, empty text and more than two
-  decimals (a typo must never be saved as 0).
+  decimals (a typo must never be saved as 0). A balance (Set Balance, the first run's pots) is read by `Cents.parseSigned`, which also takes one leading
+  minus (`-45`, or `−45,00` as Tally writes it): an overdrawn account, or the card in credit. Pots shows a pot below 0 in red and
+  the card in credit as "4,30 € in credit".
 - `Cents.dividedFloor(by:)` rounds down (also for negatives), so the daily allowance is never more than the
   money allows. The caller makes sure the days are above 0.
 - Pot balance = starting balance + entries in − entries out, counting only entries that move money (`Ledger.balance`).

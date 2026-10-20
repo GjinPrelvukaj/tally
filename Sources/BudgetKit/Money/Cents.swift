@@ -53,6 +53,14 @@ public struct Cents: Hashable, Comparable, Sendable, Codable, AdditiveArithmetic
         return Cents(euros * 100 + cents)
     }
 
+    /// A balance, which can be below zero (an overdrawn account, a card in credit): `parse` after one leading minus,
+    /// typed (-) or as Tally writes it (U+2212), so a negative balance shown in a field can be saved again.
+    public static func parseSigned(_ text: String) -> Cents? {
+        let compact = text.filter { !$0.isWhitespace }
+        guard let first = compact.first, first == "-" || first == "\u{2212}" else { return parse(compact) }
+        return parse(String(compact.dropFirst())).map { .zero - $0 }
+    }
+
     /// What a payment, spend or income is typed as: money above 0, since a 0 would record nothing and still count as done.
     public static func parsePositive(_ text: String) -> Cents? {
         parse(text).flatMap { $0 > .zero ? $0 : nil }

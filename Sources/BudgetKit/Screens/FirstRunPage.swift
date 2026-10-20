@@ -100,7 +100,7 @@ struct FirstRunPage: View {
         SettingsCard {
             ForEach(Pot.allCases, id: \.self) { pot in
                 SettingRow(title: pot == .card ? "Owed on the card" : pot.title) {
-                    money(pot.title, Binding { draft.typed[pot, default: ""] } set: { draft.typed[pot] = $0 }, zeroOK: true)
+                    money(pot.title, Binding { draft.typed[pot, default: ""] } set: { draft.typed[pot] = $0 }, signed: true)
                 }
             }
         }
@@ -119,10 +119,10 @@ struct FirstRunPage: View {
         }
     }
 
-    /// An amount in a row: the field and €, red while it doesn't read. Empty is always fine.
-    private func money(_ label: String, _ text: Binding<String>, zeroOK: Bool = false) -> some View {
+    /// An amount in a row: the field and €, red while it doesn't read. Empty is always fine; a balance (`signed`) can be 0 or below.
+    private func money(_ label: String, _ text: Binding<String>, signed: Bool = false) -> some View {
         let typed = text.wrappedValue.trimmingCharacters(in: .whitespaces)
-        let reads = typed.isEmpty || (zeroOK ? Cents.parse(typed) : Cents.parsePositive(typed)) != nil
+        let reads = typed.isEmpty || (signed ? Cents.parseSigned(typed) : Cents.parsePositive(typed)) != nil
         return HStack(spacing: 6) {
             GlassField(label: label, text: text, valid: reads).frame(width: Kit.rowAmount)
             Text("€").font(Kit.body).opacity(0.55)

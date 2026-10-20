@@ -16,7 +16,8 @@ struct SetBalanceSheet: View {
         _amount = State(initialValue: pot.figure(for: balance).editable)
     }
 
-    private var cents: Cents? { Cents.parse(amount) }
+    /// Below zero is fine: an overdrawn account, or a card paid past what it owed.
+    private var cents: Cents? { Cents.parseSigned(amount) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Kit.Space.group) {

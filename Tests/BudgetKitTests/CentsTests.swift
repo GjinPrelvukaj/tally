@@ -50,3 +50,18 @@ import Testing
     // A round debt keeps its minus.
     #expect(Cents(-4500).short == "\u{2212}45\u{00A0}€")
 }
+
+/// A balance can be below zero (an overdrawn account, a card in credit): its field takes a minus, as typed or as
+/// Tally writes it (U+2212), so a negative balance it shows can be saved again. Payments never can.
+@Test func aBalanceCanBeTypedBelowZero() {
+    #expect(Cents.parseSigned("-45") == Cents(-4500))
+    #expect(Cents.parseSigned("\u{2212}45,50") == Cents(-4550))
+    #expect(Cents.parseSigned(" - 1 200,5 ") == Cents(-120050))
+    #expect(Cents.parseSigned("12,30") == Cents(1230))
+    #expect(Cents.parseSigned(Cents(-4517).editable) == Cents(-4517))
+    #expect(Cents.parseSigned("--4") == nil)
+    #expect(Cents.parseSigned("4-") == nil)
+    #expect(Cents.parseSigned("-") == nil)
+    #expect(Cents.parse("-45") == nil)
+    #expect(Cents.parsePositive("-45") == nil)
+}

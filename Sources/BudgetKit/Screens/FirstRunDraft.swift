@@ -77,12 +77,12 @@ struct FirstRunDraft {
         return goal.map { [.emergency: $0] } ?? [:]
     }
 
-    /// Every pot; one left empty is 0. The card is kept as a debt, below zero.
+    /// Every pot; one left empty is 0, and any can be below it (overdrawn, or the card in credit). The card is kept as a debt, below zero.
     var balances: [Pot: Cents]? {
         var result: [Pot: Cents] = [:]
         for pot in Pot.allCases {
             let text = typed[pot, default: ""].trimmingCharacters(in: .whitespaces)
-            guard let cents = text.isEmpty ? .zero : Cents.parse(text) else { return nil }
+            guard let cents = text.isEmpty ? .zero : Cents.parseSigned(text) else { return nil }
             result[pot] = pot.balance(fromFigure: cents)
         }
         return result
