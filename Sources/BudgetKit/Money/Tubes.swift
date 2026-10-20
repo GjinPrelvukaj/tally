@@ -9,8 +9,8 @@ public enum Tubes {
 
     /// One scale for all four, so a taller tube really holds more: the largest goal or held amount.
     public static func scale(balances: [Pot: Cents], goals: [Pot: Cents]) -> Cents {
-        let held = balances.map { held($0.value, in: $0.key) }
-        return (held + goals.values).max() ?? .zero
+        let amounts = balances.map { Self.held($0.value, in: $0.key) }
+        return (amounts + goals.values).max() ?? .zero
     }
 
     /// The amount over the shared scale, 0 to 1; empty for nothing or a debt.
