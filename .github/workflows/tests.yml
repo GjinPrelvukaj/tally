@@ -1,0 +1,55 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch replaces a run still going.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # Tally needs macOS 26 and its SDK.
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # The build folder, kept between runs: a run with little changed takes a fraction of the time.
+      - uses: actions/cache@v6
+        with:
+          path: .build
+          key: build-${{ runner.os }}-${{ hashFiles('Package.swift', 'Package.resolved') }}-${{ github.sha }}
+          restore-keys: |
+            build-${{ runner.os }}-${{ hashFiles('Package.swift', 'Package.resolved') }}-
+            build-${{ runner.os }}-
+
+      - name: Build
+        run: swift build --build-tests
+
+      - name: Test
+        run: swift test --skip-build
+
+      # The app and its installer, as a release makes them but signed ad hoc: a broken bundle or DMG shows up here,
+      # not on release day.
+      - name: App and installer
+        run: |
+          Scripts/make-app.sh release
+          Scripts/make-dmg.sh build/Tally.app build/Tally.dmg
+
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: Tally-unsigned
+          path: build/Tally.dmg
+          retention-days: 7

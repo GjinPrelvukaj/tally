@@ -22,6 +22,7 @@
 | Build | `swift build` |
 | Test | `swift test` (filter: `swift test --filter CentsTests`) |
 | Run | `swift run Budget` opens your real saved data: **agents never run it**, only `--demo` (below) |
+| CI | `.github/workflows/tests.yml` builds, tests and makes the app and an unsigned DMG on every push to `main` and every pull request; `release.yml` publishes a signed, notarized release when a `v*` tag is pushed (its secrets are listed at its top) |
 | App bundle (in `build/`) | `Scripts/make-app.sh` (debug), `Scripts/make-app.sh release`; `Scripts/release.sh X.Y.Z` for a signed, notarized DMG |
 
 ## Seeing what you changed (demo mode)

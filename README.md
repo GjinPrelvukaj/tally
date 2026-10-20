@@ -8,6 +8,7 @@
 Open it for two seconds and you know what you can spend today, what's still to pay,<br>
 and when your emergency fund will be full.
 
+[![Tests](https://img.shields.io/github/actions/workflow/status/GjinPrelvukaj/tally/tests.yml?branch=main&style=flat-square&label=tests&labelColor=111111)](https://github.com/GjinPrelvukaj/tally/actions/workflows/tests.yml)
 [![Release](https://img.shields.io/github/v/release/GjinPrelvukaj/tally?style=flat-square&label=release&color=34D399&labelColor=111111)](https://github.com/GjinPrelvukaj/tally/releases/latest)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-22D3EE?style=flat-square&logo=apple&logoColor=white&labelColor=111111)](#download)
 [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?style=flat-square&logo=swift&logoColor=white&labelColor=111111)](Package.swift)
