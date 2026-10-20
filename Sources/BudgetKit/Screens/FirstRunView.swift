@@ -119,7 +119,7 @@ struct FirstRunView: View {
         guard let plan = draft.plan, let goals = draft.goals, let balances = draft.balances, let paid = draft.paidAmounts
         else { return }
         savePartner(partner.trimmingCharacters(in: .whitespaces))
-        store.setUp(balances: balances, paid: paid, today: today, plan: plan, goals: goals)
+        store.setUp(balances: balances, paid: paid, today: today, plan: plan, goals: goals, savings: draft.savingsPots)
     }
 }
 

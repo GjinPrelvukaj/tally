@@ -57,7 +57,7 @@ public final class Store {
 
     private static func container(_ configuration: ModelConfiguration) throws -> ModelContainer {
         // Through the migration plan: a file saved by an older Tally is moved to the newest version as it opens.
-        try ModelContainer(for: Schema(versionedSchema: SchemaV4.self), migrationPlan: TallyMigration.self, configurations: configuration)
+        try ModelContainer(for: Schema(versionedSchema: SchemaV5.self), migrationPlan: TallyMigration.self, configurations: configuration)
     }
 
     /// The five starter categories, in a store that has none yet: a new one, or one saved before categories were kept.
@@ -73,10 +73,8 @@ public final class Store {
         currentLedger() ?? Ledger(start: [:], startMonth: YearMonth(.now, calendar: calendar), plan: [], entries: [], calendar: calendar)
     }
 
-    public func goal(_ pot: Pot) -> Cents? { (attempt { try settings() } ?? nil)?.goalAmounts[pot] }
-
     /// The real ledger, or nil when it could not be read (never cached, so the next call tries again).
-    private func currentLedger() -> Ledger? {
+    func currentLedger() -> Ledger? {
         if let cached, cached.revision == revision { return cached.ledger }
         guard let ledger = attempt({ try loadLedger() }) else { return nil }
         cached = (revision, ledger)
@@ -90,10 +88,11 @@ public final class Store {
         let categories = try context.fetch(FetchDescriptor<CategoryRecord>(sortBy: [SortDescriptor(\.order)]))
         return Ledger(start: settings?.balances ?? [:], startMonth: settings?.month ?? YearMonth(.now, calendar: calendar),
                       plan: plan.map(\.value), entries: entries.map(\.value), calendar: calendar,
-                      categories: categories.map(\.value))
+                      categories: categories.map(\.value), savings: settings?.savings ?? SavingsPot.original,
+                      goals: settings?.goalAmounts ?? [:])
     }
 
-    private func settings() throws -> SettingsRecord? {
+    func settings() throws -> SettingsRecord? {
         try context.fetch(FetchDescriptor<SettingsRecord>()).first
     }
 
@@ -124,11 +123,16 @@ public final class Store {
     /// First run: the balances now, the seeded plan, and what was already paid this month.
     /// `paid` are plan items paid before the first run: done, but the balances typed in already include them.
     public func setUp(balances: [Pot: Cents], paid: [UUID: Cents], today: Date,
-                      plan: [PlanItem] = Seed.plan, goals: [Pot: Cents] = Seed.goals) {
+                      plan: [PlanItem] = Seed.plan, goals: [Pot: Cents] = Seed.goals, savings: [SavingsPot] = SavingsPot.original) {
         // Also look at the disk: a store that already holds settings must never be seeded again.
         guard !isSetUp, attempt({ try context.fetchCount(FetchDescriptor<SettingsRecord>()) }) == 0 else { return }
         let month = YearMonth(today, calendar: calendar)
-        context.insert(SettingsRecord(balances: balances, startMonth: month, goals: goals))
+        context.insert(SettingsRecord(balances: balances, startMonth: month, goals: goals, savings: savings))
+        // A starting category in a pot this person doesn't have (Clothes) spends from Main instead.
+        for record in attempt({ try context.fetch(FetchDescriptor<CategoryRecord>()) }) ?? []
+        where Pot(record.pot).isSavings && !savings.contains(where: { $0.id.rawValue == record.pot }) {
+            record.pot = Pot.main.rawValue
+        }
         for (order, item) in plan.enumerated() { context.insert(PlanItemRecord(item, order: order)) }
         for entry in Seed.paidEntries(paid, plan: plan, month: month, at: today) { context.insert(EntryRecord(entry)) }
         isSetUp = true

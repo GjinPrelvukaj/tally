@@ -53,10 +53,10 @@ struct TodayCards: View {
 
     private var pots: some View {
         VStack(alignment: .leading, spacing: 5) {
-            ForEach(Pot.allCases, id: \.self) { pot in
+            ForEach(ledger.pots, id: \.self) { pot in
                 HStack(spacing: 6) {
-                    Circle().fill(pot.light).frame(width: 6, height: 6)
-                    Text(pot.tubeName).font(Kit.quiet).opacity(0.7).lineLimit(1)
+                    Circle().fill(ledger.light(pot)).frame(width: 6, height: 6)
+                    Text(ledger.name(pot)).font(Kit.quiet).opacity(0.7).lineLimit(1)
                     Spacer(minLength: 4)
                     Text(ledger.balance(pot).short).font(Kit.quiet).monospacedDigit().privateAmount()
                 }

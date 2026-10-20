@@ -49,8 +49,8 @@ import Foundation
         #expect(ledger.plan == Example.plan)
         #expect(ledger.balance(.main) == Cents(15000))
         #expect(try #require(ledger.allowance(today: oct19)).perDay == Cents(10500))
-        #expect(store.goal(.emergency) == Cents(500000))
-        #expect(store.goal(.main) == nil)
+        #expect(store.ledger().goals[.emergency] == Cents(500000))
+        #expect(store.ledger().goals[.main] == nil)
     }
 
     @Test func paydayRecordsIncomeAndSplit() throws {

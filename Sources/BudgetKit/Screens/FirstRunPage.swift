@@ -31,7 +31,7 @@ struct FirstRunPage: View {
         case .welcome: "Welcome to Tally"
         case .income: "What comes in each month?"
         case .costs: "What do you pay regularly?"
-        case .saving: "Saving, and every day"
+        case .saving: "What do you save up for?"
         case .pots: "What's in your pots right now?"
         case .paid: "Already paid in \(draft.month.name)?"
         case .partner: "Anyone you share costs with?"
@@ -43,7 +43,7 @@ struct FirstRunPage: View {
         case .welcome: "A few questions about your month, and Tally makes your plan from the answers. Every answer can be changed later."
         case .income: "Your pay, or whatever comes in regularly. Leave it empty if nothing does."
         case .costs: "Rent, bills, subscriptions: what goes out every month or once a year. Pick the usual ones or add your own."
-        case .saving: "What you put aside when you're paid, and about what everything else costs a day. All of it can stay empty."
+        case .saving: "A pot for each: what goes in when you're paid, and the goal. Then about what everything else costs a day. All of it can stay empty."
         case .pots: "Empty is 0. You can set any of them again later on Pots."
         case .paid: "Tick what's already gone out of the money you typed. What has most likely happened is ticked for you."
         case .partner: "Their name, so a spend can be shared and Tally keeps what they owe you. Leave it empty if not."
@@ -56,7 +56,7 @@ struct FirstRunPage: View {
         VStack(alignment: .leading, spacing: Kit.Space.group) {
             line("calendar", "Your month as a plan: what comes in, what goes out, what you put aside.")
             line("circle.dotted", "What you can spend each day until you're paid next.")
-            line("cylinder.split.1x2", "Your money in four pots: Main, Clothes, the emergency fund and the card.")
+            line("cylinder.split.1x2", "Your money in pots: your main account, what you save up for, and the card.")
             line("lock", "Everything stays on this Mac.")
         }
     }
@@ -85,11 +85,7 @@ struct FirstRunPage: View {
 
     private var saving: some View {
         VStack(alignment: .leading, spacing: Kit.Space.group) {
-            SettingsCard {
-                SettingRow(title: "Into the emergency fund", detail: "Each month, when you're paid") { money("Emergency fund", $draft.toEmergency) }
-                SettingRow(title: "Into the clothes pot", detail: "Each month, when you're paid") { money("Clothes pot", $draft.toClothes) }
-                SettingRow(title: "Emergency fund goal", detail: "Tally says the month you'll reach it") { money("Goal", $draft.goal) }
-            }
+            FirstRunSavings(draft: $draft)
             SettingsCard {
                 SettingRow(title: "Everything else, a day", detail: "Food, coffee, going out: about what a day costs") { money("A day", $draft.daily) }
             }
@@ -98,9 +94,10 @@ struct FirstRunPage: View {
 
     private var pots: some View {
         SettingsCard {
-            ForEach(Pot.allCases, id: \.self) { pot in
-                SettingRow(title: pot == .card ? "Owed on the card" : pot.title) {
-                    money(pot.title, Binding { draft.typed[pot, default: ""] } set: { draft.typed[pot] = $0 }, signed: true)
+            ForEach(draft.pots, id: \.self) { pot in
+                let name = draft.savingsPots.first { $0.id == pot }?.name ?? pot.title
+                SettingRow(title: pot == .card ? "Owed on the card" : name) {
+                    money(name, Binding { draft.typed[pot, default: ""] } set: { draft.typed[pot] = $0 }, signed: true)
                 }
             }
         }

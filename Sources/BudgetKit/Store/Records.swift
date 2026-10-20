@@ -63,7 +63,7 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
 
     var value: PlanItem {
         PlanItem(id: id, name: name, amount: Cents(amount), kind: PlanKind(rawValue: kind) ?? .payment,
-                 from: from.flatMap(Pot.init), to: to.flatMap(Pot.init),
+                 from: from.map { Pot($0) }, to: to.map { Pot($0) },
                  schedule: (try? JSONDecoder().decode(Schedule.self, from: schedule)) ?? .anyDay,
                  onlyIn: onlyInYear.flatMap { year in onlyInMonth.map { YearMonth(year, $0) } }, paused: paused,
                  repeatEvery: repeatEvery ?? 1, startsIn: startsInYear.flatMap { year in startsInMonth.map { YearMonth(year, $0) } })
@@ -121,7 +121,7 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
 
     var value: Entry {
         Entry(id: id, date: date, amount: Cents(amount), kind: EntryKind(rawValue: kind) ?? .adjustment,
-              from: from.flatMap(Pot.init), to: to.flatMap(Pot.init), category: category,
+              from: from.map { Pot($0) }, to: to.map { Pot($0) }, category: category,
               note: note, planItem: planItem,
               forMonth: forYear.flatMap { year in forMonth.map { YearMonth(year, $0) } }, movesMoney: movesMoney,
               partner: partner.flatMap(PartnerShare.init), owed: owed.map(Cents.init),
@@ -152,34 +152,44 @@ private func json<T: Encodable>(_ value: T) -> Data { (try? JSONEncoder().encode
     }
 
     var value: Category {
-        Category(id: id, name: name, pot: Pot(rawValue: pot) ?? .main, retired: retired)
+        Category(id: id, name: name, pot: Pot(pot), retired: retired)
     }
 }
 
-/// The one row of settings: where each pot started, in which month, and the goal of each pot.
+/// The one row of settings: where each pot started, in which month, the goal of each pot, and the savings pots.
 @Model final class SettingsRecord {
     var startBalances: Data
     var startYear: Int
     var startMonth: Int
     var goals: Data
+    /// The savings pots, as JSON; nil in a file saved before pots of your own, which had Clothes and the Emergency fund.
+    var pots: Data?
 
-    init(balances: [Pot: Cents], startMonth: YearMonth, goals: [Pot: Cents]) {
+    init(balances: [Pot: Cents], startMonth: YearMonth, goals: [Pot: Cents], savings: [SavingsPot]) {
         startBalances = Self.data(balances)
         startYear = startMonth.year
         self.startMonth = startMonth.month
         self.goals = Self.data(goals)
+        pots = json(savings)
     }
 
     var balances: [Pot: Cents] { Self.pots(startBalances) }
-    var goalAmounts: [Pot: Cents] { Self.pots(goals) }
+    var goalAmounts: [Pot: Cents] {
+        get { Self.pots(goals) }
+        set { goals = Self.data(newValue) }
+    }
     var month: YearMonth { YearMonth(startYear, startMonth) }
+    var savings: [SavingsPot] {
+        get { pots.flatMap { try? JSONDecoder().decode([SavingsPot].self, from: $0) } ?? SavingsPot.original }
+        set { pots = json(newValue) }
+    }
 
-    private static func data(_ pots: [Pot: Cents]) -> Data {
+    static func data(_ pots: [Pot: Cents]) -> Data {
         json(Dictionary(uniqueKeysWithValues: pots.map { ($0.key.rawValue, $0.value.value) }))
     }
 
     private static func pots(_ data: Data) -> [Pot: Cents] {
         let raw = (try? JSONDecoder().decode([String: Int].self, from: data)) ?? [:]
-        return Dictionary(uniqueKeysWithValues: raw.compactMap { key, value in Pot(rawValue: key).map { ($0, Cents(value)) } })
+        return Dictionary(uniqueKeysWithValues: raw.map { key, value in (Pot(key), Cents(value)) })
     }
 }

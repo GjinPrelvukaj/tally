@@ -41,7 +41,7 @@ struct PotsView: View {
                 .eyebrow()
             RollingDigits(text: ledger.total.formatted, font: .system(size: 30, weight: .semibold))
                 .bigAmount()
-            Text("across four pots").font(.system(size: 12)).opacity(0.55)
+            Text("across \(ledger.potCount)").font(.system(size: 12)).opacity(0.55)
         }
         .accessibilityElement(children: .combine)
     }
@@ -59,12 +59,12 @@ struct PotsView: View {
         .transition(.opacity)
     }
 
-    /// One scale for all four, so a taller tube really holds more: the largest goal or amount.
+    /// One scale for every tube, so a taller tube really holds more: the largest goal or amount.
     private func tubes(_ ledger: Ledger) -> some View {
-        let goals = Dictionary(uniqueKeysWithValues: Pot.allCases.compactMap { pot in store.goal(pot).map { (pot, $0) } })
-        let scale = Tubes.scale(balances: Dictionary(uniqueKeysWithValues: Pot.allCases.map { ($0, ledger.balance($0)) }), goals: goals)
+        let goals = ledger.goals.filter { ledger.pots.contains($0.key) }
+        let scale = Tubes.scale(balances: Dictionary(uniqueKeysWithValues: ledger.pots.map { ($0, ledger.balance($0)) }), goals: goals)
         return HStack(spacing: 14) {
-            ForEach(Pot.allCases, id: \.self) { pot in
+            ForEach(ledger.pots, id: \.self) { pot in
                 let balance = ledger.balance(pot)
                 let paidOff = pot == .card && balance == .zero
                 VStack(spacing: 8) {
@@ -76,9 +76,9 @@ struct PotsView: View {
                         .lineLimit(1).minimumScaleFactor(0.6)
                         .opacity(paidOff ? 0.45 : 0.88)
                     PotTube(level: Tubes.level(Tubes.held(balance, in: pot), of: scale),
-                            goal: goals[pot].map { Tubes.level($0, of: scale) }, tint: pot.light)
+                            goal: goals[pot].map { Tubes.level($0, of: scale) }, tint: ledger.light(pot))
                     VStack(spacing: 2) {
-                        Text(pot.tubeName).opacity(0.55)
+                        Text(pot == .card ? "Card" : ledger.name(pot)).opacity(0.55).lineLimit(1).minimumScaleFactor(0.8)
                         // Kept even when empty, so every tube is the same height.
                         Text(goals[pot].flatMap { ledger.goalMonth(pot, goal: $0, today: today)?.shortName } ?? " ").opacity(0.4)
                     }
@@ -88,18 +88,6 @@ struct PotsView: View {
                 .contextMenu { Button("Set Balance…") { onSetBalance(pot) } }
                 .accessibilityAction(named: "Set Balance") { onSetBalance(pot) }
             }
-        }
-    }
-}
-
-extension Pot {
-    /// Short enough to sit under a tube.
-    var tubeName: String {
-        switch self {
-        case .main: "Main"
-        case .clothes: "Clothes"
-        case .emergency: "Emergency"
-        case .card: "Card"
         }
     }
 }

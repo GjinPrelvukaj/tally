@@ -96,3 +96,32 @@ import SwiftData
         #expect(ledger.owes("Ben") == Cents(5000))
     }
 }
+
+/// A file saved before pots of your own (`SchemaV4`) opens with Clothes and the Emergency fund, its goal and its balances.
+@MainActor @Suite struct MigrationV4Tests {
+    @Test func aFileFromBeforeOwnPotsOpensWithClothesAndTheEmergencyFund() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "tally-migration-\(UUID().uuidString)")
+        let url = folder.appending(path: "Budget.store")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        do {
+            let old = try ModelContainer(for: Schema(versionedSchema: SchemaV4.self), migrationPlan: nil,
+                                         configurations: ModelConfiguration(url: url, cloudKitDatabase: .none))
+            let context = ModelContext(old)
+            context.insert(SchemaV1.SettingsRecord(startBalances: Data(#"{"main":15000,"clothes":2400,"emergency":56960,"card":-430}"#.utf8),
+                                                   startYear: 2026, startMonth: 10, goals: Data(#"{"emergency":600000}"#.utf8)))
+            try context.save()
+        }
+
+        let store = try Store(url: url, calendar: Fixtures.calendar)
+        let ledger = store.ledger()
+        #expect(ledger.savings == SavingsPot.original)
+        #expect(ledger.pots == [.main, .clothes, .emergency, .card])
+        #expect(ledger.balance(.clothes) == Cents(2400) && ledger.balance(.emergency) == Cents(56960) && ledger.balance(.card) == Cents(-430))
+        #expect(ledger.goals[.emergency] == Cents(600000))
+        // And it can now have one of its own.
+        #expect(store.addPot("Holiday") != nil)
+        #expect(store.ledger().pots.count == 5)
+    }
+}

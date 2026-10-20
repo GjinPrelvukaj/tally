@@ -20,7 +20,7 @@ import Testing
         #expect(Pot.card.balance(fromFigure: Cents(6340)) == Cents(-6340))
         #expect(Pot.main.figure(for: Cents(-500)) == Cents(-500))
         #expect(Pot.main.balance(fromFigure: Cents(500)) == Cents(500))
-        for pot in Pot.allCases { #expect(pot.balance(fromFigure: pot.figure(for: Cents(1234))) == Cents(1234)) }
+        for pot in [Pot.main, .clothes, .emergency, .card, Pot("holiday")] { #expect(pot.balance(fromFigure: pot.figure(for: Cents(1234))) == Cents(1234)) }
     }
 
     @Test func theScaleIsTheLargestHeldAmountOrGoal() {
