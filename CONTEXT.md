@@ -83,6 +83,9 @@ Sources/BudgetKit/Screens/Modal.swift      Quick log, payday, Set Balance and Pa
                                       rest of it blurred and dimmed (only dimmed under Reduce Transparency); pulled down (>90 pt or a flick), two fingers down,
                                       Escape or a click round it closes it
 Scripts/make-icon.swift / make-icon.sh  draw the app icon (ring of days on black glass) into Resources/AppIcon.icns, which is committed
+.github/workflows/tests.yml           on every push to main and pull request: build, test, the app and an unsigned installer (an artifact for 7 days)
+.github/workflows/release.yml         a pushed `v*` tag: test, sign and notarize with the repository's secrets (`Scripts/release.sh`), publish Tally.dmg
+                                      as that release, the tag's message its notes. `main` is protected: no force pushes or deleting, and Tests must pass
 Scripts/make-dmg.sh / dmg-background.swift  the download's installer window, as Brimlight's: black glass, "Tally", the bottom light in the icon's
                                       green and cyan, the app and Applications on a ledge (Finder lays it out; the first run asks to control Finder);
                                       `Scripts/release.sh` uses it

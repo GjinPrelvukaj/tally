@@ -18,6 +18,7 @@ codesign --verify --deep --strict "$APP"
 DMG="build/Tally-$VERSION.dmg"
 Scripts/make-dmg.sh "$APP" "$DMG" # the designed installer window
 codesign --force --timestamp --sign "$IDENTITY" "$DMG"
-xcrun notarytool submit "$DMG" --keychain-profile "$PROFILE" --wait
+# On CI the profile sits in a keychain of its own (TALLY_NOTARY_KEYCHAIN).
+xcrun notarytool submit "$DMG" --keychain-profile "$PROFILE" ${TALLY_NOTARY_KEYCHAIN:+--keychain "$TALLY_NOTARY_KEYCHAIN"} --wait
 xcrun stapler staple "$DMG"
 echo "Built $DMG"

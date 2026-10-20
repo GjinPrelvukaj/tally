@@ -1,0 +1,66 @@
+name: Release
+
+# Pushing a tag like v0.3.0 tests, builds, signs and notarizes Tally.dmg and publishes it as that release.
+# The tag's message is the release notes: git tag -a v0.3.0 -m "…" && git push origin v0.3.0
+# Needs five repository secrets (Settings → Secrets and variables → Actions):
+#   DEVELOPER_ID_P12           the Developer ID Application certificate and key, exported as .p12, base64
+#   DEVELOPER_ID_P12_PASSWORD  the password it was exported with
+#   NOTARY_APPLE_ID            the Apple ID that notarizes
+#   NOTARY_TEAM_ID             its team id
+#   NOTARY_PASSWORD            an app-specific password for that Apple ID
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Test
+        run: swift test
+
+      # A keychain of its own for this run, holding the certificate and the notary's login; gone with the runner.
+      - name: Signing
+        env:
+          CERTIFICATE: ${{ secrets.DEVELOPER_ID_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        run: |
+          if [ -z "$CERTIFICATE" ] || [ -z "$NOTARY_PASSWORD" ]; then
+            echo "::error::The signing secrets aren't set; see the top of release.yml."; exit 1
+          fi
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          PASS="$(uuidgen)"
+          security create-keychain -p "$PASS" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$PASS" "$KEYCHAIN"
+          echo "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$KEYCHAIN" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/certificate.p12"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$PASS" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          xcrun notarytool store-credentials tally-notary --apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" \
+            --password "$NOTARY_PASSWORD" --keychain "$KEYCHAIN"
+          echo "TALLY_NOTARY_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+
+      - name: Build, sign and notarize
+        env:
+          TALLY_NOTARY_PROFILE: tally-notary
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          Scripts/release.sh "$VERSION"
+          # The README's download link asks for Tally.dmg.
+          cp "build/Tally-$VERSION.dmg" build/Tally.dmg
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" build/Tally.dmg --title "Tally ${GITHUB_REF_NAME#v}" --notes-from-tag --verify-tag
