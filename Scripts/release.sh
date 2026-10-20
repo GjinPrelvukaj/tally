@@ -15,11 +15,8 @@ APP="build/Tally.app"
 codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
 codesign --verify --deep --strict "$APP"
 
-DMG="build/Tally-$VERSION.dmg"; STAGE="$(mktemp -d)"
-cp -R "$APP" "$STAGE/" && ln -s /Applications "$STAGE/Applications"
-rm -f "$DMG"
-hdiutil create -volname "Tally" -srcfolder "$STAGE" -fs HFS+ -format UDZO -ov "$DMG" >/dev/null
-rm -rf "$STAGE"
+DMG="build/Tally-$VERSION.dmg"
+Scripts/make-dmg.sh "$APP" "$DMG" # the designed installer window
 codesign --force --timestamp --sign "$IDENTITY" "$DMG"
 xcrun notarytool submit "$DMG" --keychain-profile "$PROFILE" --wait
 xcrun stapler staple "$DMG"

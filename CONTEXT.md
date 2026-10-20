@@ -83,6 +83,9 @@ Sources/BudgetKit/Screens/Modal.swift      Quick log, payday, Set Balance and Pa
                                       rest of it blurred and dimmed (only dimmed under Reduce Transparency); pulled down (>90 pt or a flick), two fingers down,
                                       Escape or a click round it closes it
 Scripts/make-icon.swift / make-icon.sh  draw the app icon (ring of days on black glass) into Resources/AppIcon.icns, which is committed
+Scripts/make-dmg.sh / dmg-background.swift  the download's installer window, as Brimlight's: black glass, "Tally", the bottom light in the icon's
+                                      green and cyan, the app and Applications on a ledge (Finder lays it out; the first run asks to control Finder);
+                                      `Scripts/release.sh` uses it
 Sources/BudgetKit/Design/Living.swift  copied from Brimlight: Living, Motion, EdgeLight, GlowMeter, DayLine, LiquidDayLine, DotRing, PillButtonStyle, HoverLift, RollingDigits
 Sources/BudgetKit/Design/Spring.swift  copied from Brimlight: the damped spring
 Sources/BudgetKit/Design/Swipe.swift  `.swipeToClose(.down|.right, pull:ended:)`: two fingers on the trackpad (a local scroll-event monitor; not a mouse wheel,
