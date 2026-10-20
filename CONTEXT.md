@@ -36,7 +36,8 @@ clicking into a hidden amount field to show it, opening the menu bar panel and l
 ```
 Sources/Budget/BudgetApp.swift        the @main App: one window (`Window`, hidden title bar, resizable from `WindowSize.minimum` 880 × 560, opens at `WindowSize.standard` 940 × 620 and keeps the size it is left at; closing it quits), opens `Store()` or the demo, `--screen` (`today|pots|month|insights|entries|plan|people|settings`: that section; `payday`, `log`: Today with that card open; `firstrun`: a demo not yet set up)
 Sources/BudgetKit/Money/Cents.swift   money in whole cents: formatting (`formatted`, `wholeEuros` "2 000", `editable` "2 450,17" for a field), parsing, floor division
-Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027", `monthsSince`)
+Sources/BudgetKit/Money/Calendar+Month.swift  YearMonth: a month as two numbers (next, previous, days, clamped date, `name` "October", `shortName` "Mar 2027", `monthsSince`);
+                                      `TimeOfDay` ("18:13", read and written by hand, 24 hours; `on(_:calendar:)` the same day at that time)
 Sources/BudgetKit/Money/Model.swift   `Pot` (its id alone, as entries, the plan and balances keep it: `.main`, `.card`, and the savings pots, `.clothes` /
                                       `.emergency` from before), `SavingsPot` (name, colour, retired; `original`, `nextColour`), Schedule, PlanItem, Entry (plain values, no logic beyond `applies(in:)` and `perMonth`); a plan item comes every
                                       `repeatEvery` months (1 every month, 12 every year) from `startsIn` (nil: always), or once (`onlyIn`); a spend names its category by key;
@@ -110,7 +111,7 @@ Sources/BudgetKit/Screens/RootView.swift  the sidebar and the chosen section's p
 Sources/BudgetKit/Screens/Sidebar.swift  Today (with how many are still to pay), Pots, Month; "Records": Entries (this month's count), Plan;
                                       "You can spend" at the bottom (not while Today shows), and Log a Spend in the section's `tint` (the left of its light, just below it), beside the eye that hides amounts
 Sources/BudgetKit/Screens/TodayView.swift  Today: "Monday 19 October", the ring with "YOU CAN SPEND", the amount a day ("a day until the 2 000", "2 000 is late", red below 0);
-                                      beside it Still to pay and "Spent today", kept together in the middle of the pane; under them `TodayCards`; `TodayLayout` grows
+                                      beside it Still to pay and "Spent today" (each with its time, "18:13"), kept together in the middle of the pane; under them `TodayCards`; `TodayLayout` grows
                                       the ring (240 to 380, its dots and number with it) and the column with the window, a third of the room left above
 Sources/BudgetKit/Screens/InsightsView.swift  Insights: Ask Tally (on a Mac with Apple Intelligence), "In short", then each insight as a card with a dot for its level
 Sources/BudgetKit/Screens/AskBox.swift  "Ask about your money", three example questions; the answer (written by `Ledger.answer`, live with the data) under how
@@ -163,8 +164,8 @@ Sources/BudgetKit/Screens/MenuBar.swift  Tally in the menu bar while it runs (`M
 Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, the category chips (three a row, retired ones left out; a tap only chooses, the newest spend's to begin with: `Ledger.lastSpendCategory`, so it holds across launches), Bank Card /
                                       Credit Card / Cash (`PaymentMethodPicker`), the partner (when named), the note (`NoteField`); Log (or Return) saves
 Sources/BudgetKit/Screens/EntriesPane.swift  Entries: a month's entries newest first, "‹ October 2026 ›" back to the first month; a row opens `EntryEditor`
-                                      in a `SidePanel` on the right; `Entry.title`, `detail`, `shownAmount` say a row
-Sources/BudgetKit/Screens/EntryEditor.swift  one entry: a spend's amount, how it was paid (bank, card or cash), the partner, note and category; a payment's, income's or repayment's amount; Delete
+                                      in a `SidePanel` on the right; `Entry.title`, `detail` ("the 19th, 18:13 · Food"), `shownAmount` say a row
+Sources/BudgetKit/Screens/EntryEditor.swift  one entry: its time on its day (`TimeOfDay`, never another day), a spend's amount, how it was paid (bank, card or cash), the partner, note and category; a payment's, income's or repayment's amount; Delete
                                       (a paid plan item is due again); a balance set by hand can only be deleted. `EntryDraft.swift` holds its typed values
 Sources/BudgetKit/Screens/PlanPane.swift  Plan: Add Item; "In October" (the month's summary, four across or two by two, and Left over); each group on a card
                                       (symbol, total due this month), items by day on two lines (name and amount; when, how often, from where; "≈ 1,25 € a month"
@@ -235,7 +236,7 @@ persists; the file is `~/Library/Application Support/Budget/Budget.store`), `Des
 - Deleting an income, or changing its kind away from income, turns the items planned "with" it into "any day" (`Store.delete` / `save`), so nothing waits for an income that is gone; the editor says how many first. The card is typed as what you owes and kept as a debt (`Pot.figure(for:)` / `balance(fromFigure:)`).
 - **Entries are added; only the last action can be undone**, and any entry can be changed or deleted from the month's list
   (`Store.update`, `Store.deleteEntry`; a deleted one also clears Undo when it was part of the last action). `Store.undo()` deletes the entries the last recording action wrote (by id, one level; `undoable`, `canUndo`; `recordings` goes up with each action so the screen can offer it). RootView shows an "Undo" pill for 6 s after each action (one delayed hide, nothing runs while idle) and ⌘Z does the same. `setBalance` writes the difference as an `adjustment`, and a balance set that way holds: deleting or changing an entry
-  dated before it moves the first adjustment after it in each pot it touches by the same amount (`Ledger.setBalancesHeld`), and the delete
+  (its amount, pot or time) moves each adjustment after it in each pot it touches by what no longer adds up before it (`Ledger.setBalancesHeld`), and the delete
   confirmation says so ("Credit card stays at what you set on the 19th."); `dismiss` writes a
   `dismissed` entry that moves no money; deleting a plan item leaves its entries, so balances never change.
 - `setUp` (first run) takes the typed balances, the plan and goals the first run made, plus `paid`, the plan items already paid this
