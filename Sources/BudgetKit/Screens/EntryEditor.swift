@@ -8,6 +8,8 @@ struct EntryEditor: View {
     let title: String
     /// The categories offered: the ones in use, and this entry's own even if it was retired.
     let categories: [Category]
+    /// Balances set by hand after it, which deleting it leaves as they were: "Credit card stays at what you set on the 19th."
+    var held: [String] = []
     let save: (Entry) -> Void
     let delete: () -> Void
     let cancel: () -> Void
@@ -50,6 +52,7 @@ struct EntryEditor: View {
 
     /// Said before, so nothing comes as a surprise.
     private var deleteNote: String {
-        draft.original.planItem != nil ? "It will be due again." : "The money goes back as if it never happened."
+        ([draft.original.planItem != nil ? "It will be due again." : "The money goes back as if it never happened."] + held)
+            .joined(separator: " ")
     }
 }

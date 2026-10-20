@@ -92,6 +92,28 @@ public struct Ledger: Sendable {
         return balance(pot, counting: entries.filter { $0.date < nextMorning })
     }
 
+    /// A balance set by hand stays as it was set. When `old` is deleted (`new` nil) or changed to `new`, the first balance
+    /// set after it in each pot it touches takes up the difference, so that pot still shows what was set then and every
+    /// balance set later holds too. Returns those adjustments as they must now be; a set balance itself changes nothing.
+    public func setBalancesHeld(changing old: Entry, to new: Entry?) -> [Entry] {
+        guard old.kind != .adjustment else { return [] }
+        let pots = Set([old.from, old.to, new?.from, new?.to].compactMap { $0 })
+        return pots.sorted { $0.rawValue < $1.rawValue }.compactMap { pot in
+            let difference = effect(of: old, on: pot) - (new.map { effect(of: $0, on: pot) } ?? .zero)
+            guard difference != .zero,
+                  var set = entries.filter({ $0.kind == .adjustment && $0.to == pot && $0.date > old.date }).min(by: { $0.date < $1.date })
+            else { return nil }
+            set.amount = set.amount + difference
+            return set
+        }
+    }
+
+    /// What an entry did to a pot's balance.
+    private func effect(of entry: Entry, on pot: Pot) -> Cents {
+        guard entry.movesMoney else { return .zero }
+        return (entry.to == pot ? entry.amount : .zero) - (entry.from == pot ? entry.amount : .zero)
+    }
+
     private func balance(_ pot: Pot, counting entries: [Entry]) -> Cents {
         entries.filter(\.movesMoney).reduce(start[pot] ?? .zero) { sum, entry in
             var sum = sum
