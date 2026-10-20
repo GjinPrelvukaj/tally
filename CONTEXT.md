@@ -22,7 +22,7 @@ middle: Quick log, a payday, Set Balance, Paid Back; the first run. See `docs/ma
 Undo takes back the last recorded action. A style kit (`Design/Kit.swift`) holds every size, button and switch.
 Privacy: every amount can be hidden at once, and Tally can lock behind Touch ID (Settings, ⌘,).
 
-**Not done yet:** typing a negative balance (an overdrawn account, a card in credit); remembering Quick log's last category across launches; pots of your own
+**Not done yet:** typing a negative balance (an overdrawn account, a card in credit); pots of your own
 (they are fixed: Main, Clothes, Emergency fund, Card).
 
 **Not checked by hand yet** (keys and clicks don't reach a demo started from a script): clicking the sidebar,
@@ -149,7 +149,7 @@ Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's d
                                       dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out (none before the line starts; its first point, the day before the first run, reads "Started with")
 Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid);
                                       while amounts are hidden an amount field shows a bar until clicked or typed into (`secret: false` for a name or note)
-Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, the category chips (three a row, retired ones left out; a tap only chooses, the one used last to begin with), Bank Card /
+Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, the category chips (three a row, retired ones left out; a tap only chooses, the newest spend's to begin with: `Ledger.lastSpendCategory`, so it holds across launches), Bank Card /
                                       Credit Card / Cash (`PaymentMethodPicker`), the partner (when named), the note (`NoteField`); Log (or Return) saves
 Sources/BudgetKit/Screens/EntriesPane.swift  Entries: a month's entries newest first, "‹ October 2026 ›" back to the first month; a row opens `EntryEditor`
                                       in a `SidePanel` on the right; `Entry.title`, `detail`, `shownAmount` say a row

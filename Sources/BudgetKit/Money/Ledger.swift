@@ -38,6 +38,12 @@ public struct Ledger: Sendable {
         Pot.allCases.reduce(.zero) { $0 + balance($1) }
     }
 
+    /// The category of the newest spend (by when it happened): where Quick log starts. Kept in the data, so it is the same
+    /// after Tally is reopened, and Undo takes it back with the spend.
+    public var lastSpendCategory: String? {
+        entries.filter { $0.kind == .spend }.max { $0.date < $1.date }?.category
+    }
+
     /// What moved money in the month, and what was owed with someone from before, newest first: the list to look
     /// through, edit or delete.
     public func entries(in month: YearMonth) -> [Entry] {

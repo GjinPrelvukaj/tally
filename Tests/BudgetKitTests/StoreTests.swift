@@ -14,6 +14,20 @@ import Foundation
         return store
     }
 
+    /// Quick log starts on the category of the newest spend, so it is the same after Tally is reopened, and Undo takes it back.
+    @Test func theLastCategoryIsTheNewestSpends() {
+        let store = firstRun()
+        #expect(store.ledger().lastSpendCategory == nil)
+        store.logSpend(Cents(510), category: .goingOut, note: nil, paidWith: .bank, at: Fixtures.date(2026, 10, 19, hour: 18))
+        store.logSpend(Cents(390), category: .food, note: nil, paidWith: .card, at: Fixtures.date(2026, 10, 19, hour: 9))
+        // By when it happened, not when it was typed.
+        #expect(store.ledger().lastSpendCategory == "goingOut")
+        store.logSpend(Cents(800), category: .other, note: nil, paidWith: .cash, at: Fixtures.date(2026, 10, 19, hour: 20))
+        #expect(store.ledger().lastSpendCategory == "other")
+        store.undo()
+        #expect(store.ledger().lastSpendCategory == "goingOut")
+    }
+
     /// Everything waiting on the second job, at the planned amounts.
     func defaultSplit(_ store: Store) -> [UUID: Cents] {
         let waiting = store.ledger().stillToPay(today: oct20).filter { $0.item.schedule == .withIncome(Example.ID.second) }
