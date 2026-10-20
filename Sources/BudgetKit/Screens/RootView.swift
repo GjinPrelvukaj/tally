@@ -180,10 +180,9 @@ public struct RootView: View {
         switch sheet {
         case .log:
             let ledger = store.ledger()
-            let offered = ledger.categories.filter { !$0.retired }
-            // The one used last, unless it has since been retired.
-            QuickLogSheet(categories: offered, last: offered.first { $0.id == ledger.lastSpendCategory } ?? offered.first ?? .other,
-                          log: log, cancel: close)
+            let choices = QuickLogSheet.choices(ledger)
+            QuickLogSheet(categories: choices.categories, last: choices.last, log: log, cancel: close)
+                .modal(close: close)
         case .balance(let pot):
             SetBalanceSheet(pot: pot, name: store.ledger().name(pot), light: store.ledger().light(pot), balance: store.ledger().balance(pot),
                             set: { store.setBalance(pot, to: $0, at: today()); close() }, cancel: close)

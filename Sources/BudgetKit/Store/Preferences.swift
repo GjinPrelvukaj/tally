@@ -35,6 +35,13 @@ public enum AmountsOnOpen: String, CaseIterable, Sendable {
     }
 
     /// The saved choice. Nothing saved is As I Left Them; the old "always start hidden" switch, if on, is Hidden.
+    /// Whether amounts are hidden outside the window (the menu bar): if they were last hidden there, or start hidden,
+    /// so nothing outside it ever shows an amount the window would hide.
+    public static func hiddenOutsideWindow(in defaults: UserDefaults) -> Bool {
+        let lastHidden = defaults.bool(forKey: Preference.amountsHidden)
+        return lastHidden || saved(in: defaults).startsHidden(lastHidden: lastHidden)
+    }
+
     public static func saved(in defaults: UserDefaults) -> AmountsOnOpen {
         if let raw = defaults.string(forKey: Preference.amountsOnOpen), let choice = AmountsOnOpen(rawValue: raw) { return choice }
         return defaults.bool(forKey: Preference.hideAmounts) ? .hidden : .asLeft

@@ -58,5 +58,15 @@ struct BudgetApp: App {
         .defaultSize(WindowSize.standard)
         .windowResizability(.contentMinSize)
         .windowBackgroundDragBehavior(.enabled)
+
+        // Quick log from the menu bar while Tally runs; none when the data couldn't be opened.
+        MenuBarExtra(isInserted: .constant(store != nil)) {
+            if let store { MenuBarPanel(store: store, today: today, real: !demo, demoPartner: "Sam") }
+        } label: {
+            if let store { MenuBarLabel(store: store, today: today, real: !demo) }
+        }
+        .menuBarExtraStyle(.window)
     }
+
+    private var store: Store? { try? opened.get() }
 }

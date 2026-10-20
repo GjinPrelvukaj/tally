@@ -38,6 +38,8 @@
   the real app's preferences, so don't click in it.
 - Keys and clicks are not delivered to a demo started from a shell, so the editors inside a sheet (a plan item, a
   typed amount, the right-click "Set Balance…", ⌘N / ⌘,) are checked by hand in the real app.
+- The menu bar item's panel only opens for the active app, which a demo started from a shell isn't: its label can be read
+  through Accessibility (`AXExtrasMenuBar`), its panel is checked by hand.
 - Month in the demo has only October (the demo starts there), so paging back through months, ⌘← / ⌘→ and the hover
   read-out are checked by hand in the real app.
 

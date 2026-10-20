@@ -26,4 +26,16 @@ import Foundation
         d.set(AmountsOnOpen.shown.rawValue, forKey: Preference.amountsOnOpen)
         #expect(AmountsOnOpen.saved(in: d) == .shown)
     }
+
+    /// The menu bar never shows an amount the window would hide: set to start hidden, or last hidden in the window.
+    @Test func outsideTheWindowAmountsHideWheneverTheWindowWould() {
+        let d = defaults()
+        #expect(!AmountsOnOpen.hiddenOutsideWindow(in: d))
+        d.set(AmountsOnOpen.hidden.rawValue, forKey: Preference.amountsOnOpen)
+        #expect(AmountsOnOpen.hiddenOutsideWindow(in: d))
+        d.set(AmountsOnOpen.shown.rawValue, forKey: Preference.amountsOnOpen)
+        #expect(!AmountsOnOpen.hiddenOutsideWindow(in: d))
+        d.set(true, forKey: Preference.amountsHidden)
+        #expect(AmountsOnOpen.hiddenOutsideWindow(in: d))
+    }
 }

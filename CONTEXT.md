@@ -29,7 +29,7 @@ and retired in Settings → Pots (data from before has Clothes and the Emergency
 rows, the payday pour, ⌘N / ⌘1–⌘7 / ⌘, / ⌘Z / ⇧⌘H, right-click Set Balance, recording money with someone, the plan and entry editors (their pop-ups), typing a question into Ask Tally, pulling a card down,
 month paging, resizing the window and it keeping its size, clicking a big number or the eye to hide amounts, the Touch ID lock
 (the demo never locks) and turning it on in Settings, two-finger swipes closing a card (down) or an editor panel (right),
-clicking into a hidden amount field to show it, typing into the first run by keyboard (it was stepped through by Accessibility).
+clicking into a hidden amount field to show it, opening the menu bar panel and logging from it, typing into the first run by keyboard (it was stepped through by Accessibility).
 
 ## Where things live
 
@@ -157,6 +157,9 @@ Sources/BudgetKit/Screens/MonthLine.swift  the line in a `Canvas`: the month's d
                                       dashed where projected, paydays as labelled dots, today the brightest, the lowest point ringed; hover reads a day out (none before the line starts; its first point, the day before the first run, reads "Started with")
 Sources/BudgetKit/Screens/SheetCard.swift  the glass card every sheet sits on (`sheetCard`) and `GlassField`, the capsule text field (red while invalid);
                                       while amounts are hidden an amount field shows a bar until clicked or typed into (`secret: false` for a name or note)
+Sources/BudgetKit/Screens/MenuBar.swift  Tally in the menu bar while it runs (`MenuBarExtra` in BudgetApp): `MenuBarLabel` shows the amount a day beside
+                                      the ring's symbol (only the symbol whenever the window would hide amounts, `AmountsOnOpen.hiddenOutsideWindow`, or the lock is on); `MenuBarPanel` is Quick log on the black glass,
+                                      and Open Tally (with the lock on, only Open Tally)
 Sources/BudgetKit/Screens/QuickLogSheet.swift  Quick log: amount, the category chips (three a row, retired ones left out; a tap only chooses, the newest spend's to begin with: `Ledger.lastSpendCategory`, so it holds across launches), Bank Card /
                                       Credit Card / Cash (`PaymentMethodPicker`), the partner (when named), the note (`NoteField`); Log (or Return) saves
 Sources/BudgetKit/Screens/EntriesPane.swift  Entries: a month's entries newest first, "‹ October 2026 ›" back to the first month; a row opens `EntryEditor`

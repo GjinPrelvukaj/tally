@@ -12,6 +12,7 @@ struct LoggedSpend {
 
 /// A spend in a few seconds: the amount, what it was for, how it was paid, who with, a note; then Log (or Return).
 /// Choosing a category only chooses it: nothing is saved until Log. It starts on the category used last.
+/// The window shows it as a card (`.modal`), the menu bar in its own panel.
 struct QuickLogSheet: View {
     /// The categories offered (not the retired ones).
     let categories: [Category]
@@ -45,7 +46,12 @@ struct QuickLogSheet: View {
                     .disabled(cents == nil)
             }
         }
-        .modal(close: cancel)
+    }
+
+    /// The categories offered (not the retired ones), and the one to start on: the newest spend's, unless retired since.
+    static func choices(_ ledger: Ledger) -> (categories: [Category], last: Category) {
+        let offered = ledger.categories.filter { !$0.retired }
+        return (offered, offered.first { $0.id == ledger.lastSpendCategory } ?? offered.first ?? .other)
     }
 
     private func save() {
